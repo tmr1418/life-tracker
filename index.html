@@ -1,842 +1,1186 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Progress Tracker</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-:root {
-  --bg: #0a0a0b;
-  --surface: #111114;
-  --card: #17171c;
-  --border: #222228;
-  --gold: #c9a84c;
-  --blue: #3b82f6;
-  --green: #22c55e;
-  --red: #ef4444;
-  --text: #f0f0f0;
-  --muted: #6b6b7a;
-  --subtle: #2a2a32;
-}
+  :root {
+    --bg: #0a0a0b;
+    --surface: #111114;
+    --card: #17171c;
+    --border: #222228;
+    --accent-gold: #c9a84c;
+    --accent-blue: #3b82f6;
+    --accent-green: #22c55e;
+    --accent-red: #ef4444;
+    --text: #f0f0f0;
+    --muted: #6b6b7a;
+    --subtle: #2a2a32;
+  }
 
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'DM Sans', sans-serif;
-  min-height: 100vh;
-}
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
 
-.app { max-width: 1100px; margin: 0 auto; padding: 40px 20px 60px; }
+  /* Grain overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.6;
+  }
 
-/* ── Header ── */
-header {
-  display: flex; justify-content: space-between; align-items: flex-end;
-  margin-bottom: 36px; padding-bottom: 24px; border-bottom: 1px solid var(--border);
-  flex-wrap: wrap; gap: 16px;
-}
-header h1 {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: clamp(2.2rem, 6vw, 3.8rem);
-  letter-spacing: 0.04em; line-height: 1;
-}
-header h1 span { color: var(--gold); }
-header p { color: var(--muted); font-size: 0.78rem; margin-top: 6px;
-  font-family: 'DM Mono', monospace; letter-spacing: 0.1em; text-transform: uppercase; }
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 24px;
+    position: relative;
+    z-index: 1;
+  }
 
-.date-badge {
-  background: var(--card); border: 1px solid var(--border); border-radius: 8px;
-  padding: 10px 16px; text-align: right;
-}
-.date-badge strong { display: block; font-family: 'Bebas Neue', sans-serif;
-  font-size: 1.2rem; color: var(--gold); }
-.date-badge span { font-family: 'DM Mono', monospace; font-size: 0.68rem; color: var(--muted); }
+  /* Header */
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 48px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
 
-/* ── Mission ── */
-.mission {
-  background: rgba(201,168,76,0.07); border: 1px solid rgba(201,168,76,0.25);
-  border-left: 4px solid var(--gold); border-radius: 8px;
-  padding: 18px 22px; margin-bottom: 36px;
-  font-size: 0.92rem; color: #d4bc7a; font-style: italic; line-height: 1.6;
-}
-.mission strong {
-  font-style: normal; color: var(--gold); font-family: 'DM Mono', monospace;
-  font-size: 0.65rem; letter-spacing: 0.14em; text-transform: uppercase;
-  display: block; margin-bottom: 6px;
-}
+  .header-left h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2.5rem, 6vw, 4rem);
+    letter-spacing: 0.04em;
+    line-height: 1;
+    color: var(--text);
+  }
 
-/* ── Section label ── */
-.section-label {
-  display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
-}
-.section-label span {
-  font-family: 'DM Mono', monospace; font-size: 0.68rem; letter-spacing: 0.16em;
-  text-transform: uppercase; color: var(--muted); white-space: nowrap;
-}
-.section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .header-left h1 span {
+    color: var(--accent-gold);
+  }
 
-/* ── Cards ── */
-.card {
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: 12px; padding: 20px;
-}
-.card-title {
-  font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 0.06em;
-  color: var(--text); margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
-}
-.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gold); flex-shrink: 0; }
-.dot.blue { background: var(--blue); }
-.dot.green { background: var(--green); }
+  .header-left p {
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-top: 6px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
 
-/* ── Grids ── */
-.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
-.grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+  .date-badge {
+    background: var(--subtle);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-align: right;
+  }
 
-/* ── Rings ── */
-.rings-row { display: flex; justify-content: space-around; flex-wrap: wrap; gap: 24px; padding: 10px 0; }
-.ring-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.ring-container { position: relative; width: 100px; height: 100px; }
-.ring-svg { transform: rotate(-90deg); }
-.ring-bg { fill: none; stroke: var(--subtle); stroke-width: 8; }
-.ring-fill { fill: none; stroke-width: 8; stroke-linecap: round;
-  stroke-dasharray: 263.9; stroke-dashoffset: 263.9;
-  transition: stroke-dashoffset 0.8s cubic-bezier(0.4,0,0.2,1); }
-.ring-label-inner { position: absolute; inset: 0; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; }
-.ring-pct { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; color: var(--text); line-height: 1; }
-.ring-sub { font-family: 'DM Mono', monospace; font-size: 0.55rem; color: var(--muted);
-  letter-spacing: 0.1em; text-transform: uppercase; margin-top: 2px; }
-.ring-name { font-family: 'DM Mono', monospace; font-size: 0.62rem; letter-spacing: 0.1em;
-  text-transform: uppercase; color: var(--muted); }
+  .date-badge strong {
+    display: block;
+    color: var(--accent-gold);
+    font-size: 1.1rem;
+  }
 
-/* ── Progress bars ── */
-.bar-wrap { margin-bottom: 12px; }
-.bar-meta { display: flex; justify-content: space-between; margin-bottom: 5px; }
-.bar-label { font-size: 0.82rem; color: #b0b0be; }
-.bar-pct { font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--muted); }
-.bar-track { height: 6px; background: var(--subtle); border-radius: 99px;
-  overflow: hidden; cursor: pointer; position: relative; }
-.bar-track.no-click { cursor: default; }
-.bar-fill { height: 100%; border-radius: 99px; background: var(--gold);
-  transition: width 0.5s ease; }
-.bar-fill.blue { background: var(--blue); }
-.bar-fill.green { background: var(--green); }
-.bar-fill.multi { background: linear-gradient(90deg, var(--blue), var(--green)); }
+  /* Mission Banner */
+  .mission {
+    background: linear-gradient(135deg, rgba(201,168,76,0.12), rgba(201,168,76,0.04));
+    border: 1px solid rgba(201,168,76,0.3);
+    border-left: 4px solid var(--accent-gold);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 40px;
+    font-size: 0.95rem;
+    color: #d4bc7a;
+    font-style: italic;
+    line-height: 1.6;
+  }
 
-/* ── Checklist ── */
-.checklist { list-style: none; }
-.checklist li {
-  display: flex; align-items: flex-start; gap: 10px;
-  padding: 9px 0; border-bottom: 1px solid #1e1e24;
-  cursor: pointer; transition: color 0.15s;
-}
-.checklist li:last-child { border-bottom: none; }
-.check-box {
-  width: 16px; height: 16px; border-radius: 4px; flex-shrink: 0; margin-top: 1px;
-  border: 1.5px solid var(--muted); display: flex; align-items: center;
-  justify-content: center; transition: all 0.15s;
-}
-.checklist li.done .check-box { background: var(--gold); border-color: var(--gold); }
-.checklist li.done .check-box::after { content: '✓'; font-size: 10px; color: #000; font-weight: 700; }
-.checklist li span { font-size: 0.83rem; color: #b0b0be; line-height: 1.4; }
-.checklist li.done span { text-decoration: line-through; color: var(--muted); }
+  .mission strong {
+    font-style: normal;
+    color: var(--accent-gold);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 6px;
+  }
 
-/* ── Stat box ── */
-.stat-box {
-  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
-  padding: 12px 14px; margin-bottom: 10px;
-}
-.stat-label { font-family: 'DM Mono', monospace; font-size: 0.62rem; letter-spacing: 0.12em;
-  text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
-.stat-value { font-family: 'Bebas Neue', sans-serif; font-size: 1.55rem;
-  letter-spacing: 0.04em; color: var(--text); }
-.stat-value.gold { color: var(--gold); }
-.stat-value.blue { color: var(--blue); }
-.stat-sub { font-size: 0.73rem; color: var(--muted); margin-top: 2px; }
+  /* Lanes */
+  .lanes {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 40px;
+  }
 
-/* ── Inputs ── */
-.field-label { font-family: 'DM Mono', monospace; font-size: 0.62rem; letter-spacing: 0.12em;
-  text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; }
-input[type=number], textarea {
-  background: var(--subtle); border: 1px solid var(--border); border-radius: 6px;
-  color: var(--text); font-family: 'DM Mono', monospace; font-size: 0.85rem;
-  padding: 8px 12px; outline: none; transition: border-color 0.2s;
-}
-input[type=number] { width: 100%; text-align: left; }
-input[type=number]:focus, textarea:focus { border-color: var(--gold); }
-input[type=number]::-webkit-inner-spin-button { opacity: 0.4; }
-textarea { width: 100%; resize: vertical; min-height: 80px; line-height: 1.5;
-  font-family: 'DM Sans', sans-serif; font-size: 0.85rem; }
+  .lane-pill {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 18px;
+    text-align: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
 
-.inline-row { display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 8px; gap: 10px; }
-.inline-row label { font-size: 0.8rem; color: #b0b0be; }
-.inline-row input { width: 90px; text-align: center; }
+  .lane-pill.active, .lane-pill:hover {
+    border-color: var(--accent-gold);
+    color: var(--accent-gold);
+    background: rgba(201,168,76,0.06);
+  }
 
-/* ── Tags ── */
-.tags { margin-top: 10px; }
-.tag { display: inline-block; border-radius: 4px; padding: 2px 8px;
-  font-size: 0.68rem; font-family: 'DM Mono', monospace; margin: 2px;
-  text-transform: uppercase; letter-spacing: 0.08em; }
-.tag.gold { background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.3); color: var(--gold); }
-.tag.blue { background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); color: var(--blue); }
+  .lane-pill .lane-icon { font-size: 1.2rem; display: block; margin-bottom: 4px; }
 
-/* ── Save status ── */
-.save-status {
-  font-family: 'DM Mono', monospace; font-size: 0.68rem; color: var(--muted);
-  letter-spacing: 0.1em; text-transform: uppercase;
-  transition: color 0.3s;
-}
-.save-status.saving { color: var(--gold); }
-.save-status.saved { color: var(--green); }
-.save-status.error { color: var(--red); }
+  /* Section headers */
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
 
-/* ── Divider ── */
-hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
 
-/* ── Section spacing ── */
-.section { margin-bottom: 36px; }
+  /* Grid layouts */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 
-/* ── Footer ── */
-footer { text-align: center; padding-top: 24px; border-top: 1px solid var(--border); }
-footer p { font-family: 'DM Mono', monospace; font-size: 0.68rem; color: var(--muted);
-  letter-spacing: 0.1em; text-transform: uppercase; }
+  /* Cards */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    transition: border-color 0.2s;
+  }
 
-/* ── Loading ── */
-.loading {
-  min-height: 100vh; display: flex; align-items: center; justify-content: center;
-  flex-direction: column; gap: 16px;
-}
-.loading p { font-family: 'DM Mono', monospace; font-size: 0.8rem;
-  color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; }
-.spinner { width: 32px; height: 32px; border: 2px solid var(--subtle);
-  border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
+  .card:hover { border-color: #333340; }
 
-/* ── Setup screen ── */
-.setup {
-  min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px;
-}
-.setup-card {
-  background: var(--card); border: 1px solid var(--border); border-radius: 16px;
-  padding: 40px; max-width: 480px; width: 100%;
-}
-.setup-card h2 { font-family: 'Bebas Neue', sans-serif; font-size: 2rem;
-  letter-spacing: 0.06em; color: var(--text); margin-bottom: 8px; }
-.setup-card p { font-size: 0.85rem; color: var(--muted); margin-bottom: 24px; line-height: 1.5; }
-.setup-field { margin-bottom: 16px; }
-.setup-btn {
-  width: 100%; background: var(--gold); color: #000; border: none; border-radius: 8px;
-  padding: 14px; font-family: 'Bebas Neue', sans-serif; font-size: 1rem;
-  letter-spacing: 0.1em; cursor: pointer; margin-top: 8px; transition: opacity 0.2s;
-}
-.setup-btn:hover { opacity: 0.85; }
-.setup-error { color: var(--red); font-size: 0.8rem; margin-top: 10px;
-  font-family: 'DM Mono', monospace; }
+  .card-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.15rem;
+    letter-spacing: 0.06em;
+    color: var(--text);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
 
-@media (max-width: 600px) {
-  .grid-2, .grid-3 { grid-template-columns: 1fr; }
-  .rings-row { gap: 16px; }
-}
+  .card-title .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent-gold);
+    flex-shrink: 0;
+  }
+
+  .card-title .dot.blue { background: var(--accent-blue); }
+  .card-title .dot.green { background: var(--accent-green); }
+  .card-title .dot.red { background: var(--accent-red); }
+
+  /* Progress bars */
+  .progress-wrap { margin-bottom: 14px; }
+
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+  }
+
+  .progress-name {
+    font-size: 0.82rem;
+    color: #b0b0be;
+  }
+
+  .progress-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+
+  .bar-track {
+    height: 6px;
+    background: var(--subtle);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: var(--accent-gold);
+    transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+    position: relative;
+  }
+
+  .bar-fill.blue { background: var(--accent-blue); }
+  .bar-fill.green { background: var(--accent-green); }
+  .bar-fill.red { background: var(--accent-red); }
+  .bar-fill.multi { background: linear-gradient(90deg, var(--accent-blue), var(--accent-green)); }
+
+  /* Stat boxes */
+  .stat-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+
+  .stat-box-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  .stat-box-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 0.04em;
+    color: var(--text);
+  }
+
+  .stat-box-value.gold { color: var(--accent-gold); }
+  .stat-box-value.green { color: var(--accent-green); }
+  .stat-box-value.blue { color: var(--accent-blue); }
+
+  .stat-box-sub {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  /* Checklist */
+  .checklist { list-style: none; }
+
+  .checklist li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--subtle);
+    font-size: 0.85rem;
+    color: #b0b0be;
+    cursor: pointer;
+    transition: color 0.15s;
+  }
+
+  .checklist li:last-child { border-bottom: none; }
+  .checklist li:hover { color: var(--text); }
+
+  .check-box {
+    width: 16px; height: 16px;
+    border: 1.5px solid var(--muted);
+    border-radius: 4px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+
+  .checklist li.done .check-box {
+    background: var(--accent-gold);
+    border-color: var(--accent-gold);
+  }
+
+  .checklist li.done .check-box::after {
+    content: '✓';
+    font-size: 10px;
+    color: #000;
+    font-weight: 700;
+  }
+
+  .checklist li.done span { text-decoration: line-through; color: var(--muted); }
+
+  /* Number input tracker */
+  .number-input-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .num-label { font-size: 0.82rem; color: #b0b0be; flex: 1; }
+
+  .num-input {
+    background: var(--subtle);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.85rem;
+    padding: 6px 10px;
+    width: 80px;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .num-input:focus { border-color: var(--accent-gold); }
+
+  /* Tags */
+  .tag {
+    display: inline-block;
+    background: var(--subtle);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 0.7rem;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+    margin: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .tag.gold { background: rgba(201,168,76,0.1); border-color: rgba(201,168,76,0.3); color: var(--accent-gold); }
+  .tag.blue { background: rgba(59,130,246,0.1); border-color: rgba(59,130,246,0.3); color: var(--accent-blue); }
+  .tag.green { background: rgba(34,197,94,0.1); border-color: rgba(34,197,94,0.3); color: var(--accent-green); }
+
+  /* Notes area */
+  .notes-input {
+    width: 100%;
+    background: var(--subtle);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    padding: 12px 14px;
+    resize: vertical;
+    min-height: 80px;
+    outline: none;
+    transition: border-color 0.2s;
+    line-height: 1.5;
+  }
+
+  .notes-input:focus { border-color: var(--accent-gold); }
+
+  /* Divider */
+  .divider { margin: 32px 0; border: none; border-top: 1px solid var(--border); }
+
+  /* Score ring */
+  .score-ring-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 0;
+  }
+
+  .ring-container { position: relative; width: 100px; height: 100px; }
+
+  .ring-svg { transform: rotate(-90deg); }
+
+  .ring-bg { fill: none; stroke: var(--subtle); stroke-width: 8; }
+  .ring-fill { fill: none; stroke: var(--accent-gold); stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 0.8s ease; }
+  .ring-fill.blue { stroke: var(--accent-blue); }
+  .ring-fill.green { stroke: var(--accent-green); }
+
+  .ring-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .ring-pct {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 0.04em;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  .ring-name {
+    font-size: 0.6rem;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .ring-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 10px;
+  }
+
+  /* Section spacing */
+  .section { margin-bottom: 36px; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .grid-2, .grid-3, .lanes { grid-template-columns: 1fr; }
+    header { flex-direction: column; align-items: flex-start; gap: 16px; }
+  }
+
+  @media (max-width: 600px) {
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+
+  /* Save button */
+  .save-btn {
+    background: var(--accent-gold);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 28px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    display: block;
+    margin: 0 auto 40px;
+  }
+
+  .save-btn:hover { opacity: 0.85; }
+
+  .save-msg {
+    text-align: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--accent-green);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    height: 20px;
+    margin-top: -30px;
+    margin-bottom: 30px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .save-msg.show { opacity: 1; }
 </style>
 </head>
 <body>
+<div class="container">
 
-<div id="root"></div>
+  <header>
+    <div class="header-left">
+      <h1>YOUR <span>PROGRESS</span></h1>
+      <p>Three Lanes · One Mission · All In</p>
+    </div>
+    <div class="date-badge">
+      <strong id="today-date"></strong>
+      <span>Daily Tracker</span>
+    </div>
+  </header>
+
+  <div class="mission">
+    <strong>Core Mission</strong>
+    Becoming a stronger man for your family while building long-term stability — as a father, a federal investigator, a disciplined man, and a music creator.
+  </div>
+
+  <!-- LANE OVERVIEW -->
+  <div class="lanes">
+    <div class="lane-pill active"><span class="lane-icon">🏛️</span>Career · 1811</div>
+    <div class="lane-pill"><span class="lane-icon">👨‍👩‍👦</span>Family · Leadership</div>
+    <div class="lane-pill"><span class="lane-icon">🎵</span>Music · Studio</div>
+  </div>
+
+  <!-- OVERALL SCORES -->
+  <div class="section">
+    <div class="section-label">Weekly Score</div>
+    <div class="card">
+      <div style="display:flex; justify-content:space-around; flex-wrap:wrap; gap:20px; padding: 10px 0;">
+
+        <div class="score-ring-wrap">
+          <div class="ring-container">
+            <svg class="ring-svg" width="100" height="100" viewBox="0 0 100 100">
+              <circle class="ring-bg" cx="50" cy="50" r="42"/>
+              <circle class="ring-fill" id="ring-career" cx="50" cy="50" r="42"
+                stroke-dasharray="263.9" stroke-dashoffset="263.9"/>
+            </svg>
+            <div class="ring-label">
+              <span class="ring-pct" id="pct-career">0%</span>
+              <span class="ring-name">career</span>
+            </div>
+          </div>
+          <div class="ring-title">1811 Path</div>
+        </div>
+
+        <div class="score-ring-wrap">
+          <div class="ring-container">
+            <svg class="ring-svg" width="100" height="100" viewBox="0 0 100 100">
+              <circle class="ring-bg" cx="50" cy="50" r="42"/>
+              <circle class="ring-fill green" id="ring-fitness" cx="50" cy="50" r="42"
+                stroke-dasharray="263.9" stroke-dashoffset="263.9"/>
+            </svg>
+            <div class="ring-label">
+              <span class="ring-pct" id="pct-fitness">0%</span>
+              <span class="ring-name">fitness</span>
+            </div>
+          </div>
+          <div class="ring-title">Body Transformation</div>
+        </div>
+
+        <div class="score-ring-wrap">
+          <div class="ring-container">
+            <svg class="ring-svg" width="100" height="100" viewBox="0 0 100 100">
+              <circle class="ring-bg" cx="50" cy="50" r="42"/>
+              <circle class="ring-fill blue" id="ring-music" cx="50" cy="50" r="42"
+                stroke-dasharray="263.9" stroke-dashoffset="263.9"/>
+            </svg>
+            <div class="ring-label">
+              <span class="ring-pct" id="pct-music">0%</span>
+              <span class="ring-name">music</span>
+            </div>
+          </div>
+          <div class="ring-title">Studio Growth</div>
+        </div>
+
+        <div class="score-ring-wrap">
+          <div class="ring-container">
+            <svg class="ring-svg" width="100" height="100" viewBox="0 0 100 100">
+              <circle class="ring-bg" cx="50" cy="50" r="42"/>
+              <circle class="ring-fill" id="ring-finance" cx="50" cy="50" r="42"
+                stroke-dasharray="263.9" stroke-dashoffset="263.9"/>
+            </svg>
+            <div class="ring-label">
+              <span class="ring-pct" id="pct-finance">0%</span>
+              <span class="ring-name">debt</span>
+            </div>
+          </div>
+          <div class="ring-title">Debt Elimination</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- LANE 1: CAREER -->
+  <div class="section">
+    <div class="section-label">Lane 01 — Career · 1811 Path</div>
+    <div class="grid-2">
+
+      <div class="card">
+        <div class="card-title"><span class="dot"></span> Study Progress</div>
+        <div class="progress-wrap">
+          <div class="progress-meta"><span class="progress-name">Federal Investigative Work</span><span class="progress-value" id="val-invest">0%</span></div>
+          <div class="bar-track"><div class="bar-fill" id="bar-invest" style="width:0%"></div></div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-meta"><span class="progress-name">Court Procedures</span><span class="progress-value" id="val-court">0%</span></div>
+          <div class="bar-track"><div class="bar-fill" id="bar-court" style="width:0%"></div></div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-meta"><span class="progress-name">Prosecutorial Standards</span><span class="progress-value" id="val-pros">0%</span></div>
+          <div class="bar-track"><div class="bar-fill" id="bar-pros" style="width:0%"></div></div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-meta"><span class="progress-name">Giglio / Credibility Rules</span><span class="progress-value" id="val-gig">0%</span></div>
+          <div class="bar-track"><div class="bar-fill" id="bar-gig" style="width:0%"></div></div>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; margin-top:10px;">
+          <span class="tag gold">HSI</span>
+          <span class="tag gold">ATF</span>
+          <span class="tag gold">Transnational Crime</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot"></span> Application Checklist</div>
+        <ul class="checklist" id="career-checklist">
+          <li data-id="c1"><div class="check-box"></div><span>Update federal resume (USAJobs format)</span></li>
+          <li data-id="c2"><div class="check-box"></div><span>Request letters of recommendation</span></li>
+          <li data-id="c3"><div class="check-box"></div><span>Research current 1811 openings</span></li>
+          <li data-id="c4"><div class="check-box"></div><span>Submit first application (HSI or ATF)</span></li>
+          <li data-id="c5"><div class="check-box"></div><span>Review Giglio case law</span></li>
+          <li data-id="c6"><div class="check-box"></div><span>Network with current 1811 agents</span></li>
+          <li data-id="c7"><div class="check-box"></div><span>Complete structured interview prep</span></li>
+        </ul>
+      </div>
+
+    </div>
+
+    <div style="margin-top:16px;">
+      <div class="card">
+        <div class="card-title"><span class="dot"></span> Study Log &amp; Notes</div>
+        <textarea class="notes-input" id="career-notes" placeholder="What did you study today? Cases reviewed, key concepts, insights..."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- LANE 2: FITNESS -->
+  <div class="section">
+    <div class="section-label">Lane 02 — Body Transformation · 90-Day Cut</div>
+    <div class="grid-3">
+
+      <div class="card">
+        <div class="card-title"><span class="dot green"></span> Weight</div>
+        <div class="stat-box">
+          <div class="stat-box-label">Starting Weight</div>
+          <div class="stat-box-value">257 <span style="font-size:1rem;color:var(--muted)">lbs</span></div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-label">Current Weight</div>
+          <input type="number" class="num-input" id="current-weight" placeholder="---" style="width:100%; text-align:left; background:var(--subtle); border:1px solid var(--border); padding:8px 12px; border-radius:6px;">
+          <div class="stat-box-sub">Goal: 212 lbs (–45 lbs)</div>
+        </div>
+        <div class="progress-wrap" style="margin-top:8px;">
+          <div class="progress-meta"><span class="progress-name">Fat Loss Progress</span><span class="progress-value" id="val-weight">0%</span></div>
+          <div class="bar-track"><div class="bar-fill green" id="bar-weight" style="width:0%"></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot green"></span> Daily Targets</div>
+        <ul class="checklist" id="fitness-checklist">
+          <li data-id="f1"><div class="check-box"></div><span>200g+ protein hit today</span></li>
+          <li data-id="f2"><div class="check-box"></div><span>Calorie deficit maintained</span></li>
+          <li data-id="f3"><div class="check-box"></div><span>Strength training session done</span></li>
+          <li data-id="f4"><div class="check-box"></div><span>Cardio session done</span></li>
+          <li data-id="f5"><div class="check-box"></div><span>8h sleep target</span></li>
+          <li data-id="f6"><div class="check-box"></div><span>Supplements taken</span></li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot green"></span> Performance Goals</div>
+        <div class="progress-wrap">
+          <div class="progress-meta"><span class="progress-name">Marathon Readiness</span><span class="progress-value" id="val-marathon">0%</span></div>
+          <div class="bar-track"><div class="bar-fill green" id="bar-marathon" style="width:0%"></div></div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-meta"><span class="progress-name">Push-ups (goal: 70/min)</span><span class="progress-value" id="val-pushup">0</span></div>
+          <div class="bar-track"><div class="bar-fill green" id="bar-pushup" style="width:0%"></div></div>
+        </div>
+        <div class="number-input-row">
+          <span class="num-label">Best push-ups / min today</span>
+          <input type="number" class="num-input" id="pushup-count" placeholder="0" min="0" max="100">
+        </div>
+        <div class="number-input-row">
+          <span class="num-label">Longest run this week (mi)</span>
+          <input type="number" class="num-input" id="run-miles" placeholder="0" min="0" max="26" step="0.1">
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- LANE 3: MUSIC -->
+  <div class="section">
+    <div class="section-label">Lane 03 — Music Business · Studio Growth</div>
+    <div class="grid-2">
+
+      <div class="card">
+        <div class="card-title"><span class="dot blue"></span> Revenue Tracker</div>
+        <div class="stat-box">
+          <div class="stat-box-label">Monthly Revenue Goal</div>
+          <div class="stat-box-value gold">$1,000</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-label">Revenue This Month</div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span style="color:var(--muted); font-family:'DM Mono',monospace;">$</span>
+            <input type="number" class="num-input" id="music-revenue" placeholder="0" style="width:120px;" min="0">
+          </div>
+        </div>
+        <div class="progress-wrap" style="margin-top:10px;">
+          <div class="progress-meta"><span class="progress-name">Toward $1k/month</span><span class="progress-value" id="val-rev">0%</span></div>
+          <div class="bar-track"><div class="bar-fill blue" id="bar-rev" style="width:0%"></div></div>
+        </div>
+        <div style="margin-top: 12px;">
+          <span class="tag blue">Beats</span>
+          <span class="tag blue">Mix/Master</span>
+          <span class="tag blue">Recording</span>
+          <span class="tag blue">Sync Licensing</span>
+          <span class="tag blue">Artist Mgmt</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot blue"></span> Artist Development</div>
+        <div class="stat-box">
+          <div class="stat-box-label">Signed Clients</div>
+          <div class="stat-box-value blue">1 <span style="font-size:0.9rem; color:var(--muted)">($300 package)</span></div>
+          <div class="stat-box-sub">Target: Latin Urban · R&B · Local Indie</div>
+        </div>
+        <ul class="checklist" id="music-checklist">
+          <li data-id="m1"><div class="check-box"></div><span>Deliver on current artist's package</span></li>
+          <li data-id="m2"><div class="check-box"></div><span>Complete a release strategy for client</span></li>
+          <li data-id="m3"><div class="check-box"></div><span>Outreach to 1 new potential client</span></li>
+          <li data-id="m4"><div class="check-box"></div><span>Upload 1 new beat to catalog</span></li>
+          <li data-id="m5"><div class="check-box"></div><span>Research sync licensing opportunities</span></li>
+          <li data-id="m6"><div class="check-box"></div><span>Post studio content on social media</span></li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- FINANCE -->
+  <div class="section">
+    <div class="section-label">Finance — Debt Elimination</div>
+    <div class="grid-3">
+
+      <div class="card">
+        <div class="card-title"><span class="dot"></span> Student Loans</div>
+        <div class="stat-box">
+          <div class="stat-box-label">Starting Balance</div>
+          <div class="stat-box-value">$16,000</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-label">Remaining</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="color:var(--muted);font-family:'DM Mono',monospace;">$</span>
+            <input type="number" class="num-input" id="loan-bal" placeholder="16000" style="width:100px;" min="0" max="16000">
+          </div>
+        </div>
+        <div class="progress-wrap" style="margin-top:10px;">
+          <div class="progress-meta"><span class="progress-name">Paid Off</span><span class="progress-value" id="val-loan">0%</span></div>
+          <div class="bar-track"><div class="bar-fill" id="bar-loan" style="width:0%"></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot"></span> Wife's CC Debt</div>
+        <div class="stat-box">
+          <div class="stat-box-label">Starting Balance</div>
+          <div class="stat-box-value">$24,000</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-label">Remaining</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="color:var(--muted);font-family:'DM Mono',monospace;">$</span>
+            <input type="number" class="num-input" id="cc-bal" placeholder="24000" style="width:100px;" min="0" max="24000">
+          </div>
+        </div>
+        <div class="progress-wrap" style="margin-top:10px;">
+          <div class="progress-meta"><span class="progress-name">Paid Off</span><span class="progress-value" id="val-cc">0%</span></div>
+          <div class="bar-track"><div class="bar-fill" id="bar-cc" style="width:0%"></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot"></span> Total Debt Overview</div>
+        <div class="stat-box">
+          <div class="stat-box-label">Total Starting Debt</div>
+          <div class="stat-box-value">$32,000</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-label">Credit Score</div>
+          <div class="stat-box-value gold" id="credit-score-display">650</div>
+          <div class="stat-box-sub">Update as it changes</div>
+        </div>
+        <div class="number-input-row" style="margin-top:8px;">
+          <span class="num-label">Current credit score</span>
+          <input type="number" class="num-input" id="credit-score" placeholder="650" min="300" max="850">
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- FAMILY / RELOCATION -->
+  <div class="section">
+    <div class="section-label">Family · Relocation Planning</div>
+    <div class="grid-2">
+
+      <div class="card">
+        <div class="card-title"><span class="dot"></span> Family Priorities</div>
+        <ul class="checklist" id="family-checklist">
+          <li data-id="fam1"><div class="check-box"></div><span>Son's childcare arrangement confirmed</span></li>
+          <li data-id="fam2"><div class="check-box"></div><span>Support wife through postpartum this week</span></li>
+          <li data-id="fam3"><div class="check-box"></div><span>Quality 1-on-1 time with son today</span></li>
+          <li data-id="fam4"><div class="check-box"></div><span>Family dinner / intentional connection</span></li>
+          <li data-id="fam5"><div class="check-box"></div><span>Rest properly (not just for fitness)</span></li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot"></span> Relocation (~18 months)</div>
+        <div class="progress-wrap">
+          <div class="progress-meta"><span class="progress-name">Relocation Readiness</span><span class="progress-value" id="val-reloc">0%</span></div>
+          <div class="bar-track"><div class="bar-fill multi" id="bar-reloc" style="width:0%"></div></div>
+        </div>
+        <ul class="checklist" id="reloc-checklist">
+          <li data-id="r1"><div class="check-box"></div><span>Research Miami COL vs salary for 1811</span></li>
+          <li data-id="r2"><div class="check-box"></div><span>Research NYC / Charlotte options</span></li>
+          <li data-id="r3"><div class="check-box"></div><span>Start relocation savings fund</span></li>
+          <li data-id="r4"><div class="check-box"></div><span>Align relocation with 1811 placement</span></li>
+          <li data-id="r5"><div class="check-box"></div><span>Research school districts / neighborhoods</span></li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SAVE -->
+  <button class="save-btn" onclick="saveAll()">SAVE PROGRESS</button>
+  <div class="save-msg" id="save-msg">Progress saved ✓</div>
+
+</div>
 
 <script>
-// ─────────────────────────────────────────────────────────────────────────────
-// CONFIG — paste your Supabase URL and anon key here
-// ─────────────────────────────────────────────────────────────────────────────
-const SUPABASE_URL  = "YOUR_SUPABASE_URL";
-const SUPABASE_KEY  = "YOUR_SUPABASE_ANON_KEY";
-const SETUP_NEEDED  = SUPABASE_URL === "YOUR_SUPABASE_URL";
+// ── Utilities ─────────────────────────────────────────────────────────────────
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Default state
-// ─────────────────────────────────────────────────────────────────────────────
-const DEFAULT = {
-  study:         { invest:0, court:0, pros:0, gig:0 },
-  careerChecks:  { c1:false,c2:false,c3:false,c4:false,c5:false,c6:false,c7:false },
-  careerNotes:   "",
-  currentWeight: "",
-  pushupCount:   "",
-  runMiles:      "",
-  marathonPct:   0,
-  fitnessChecks: { f1:false,f2:false,f3:false,f4:false,f5:false,f6:false },
-  musicRevenue:  "",
-  musicChecks:   { m1:false,m2:false,m3:false,m4:false,m5:false,m6:false },
-  loanBal:       "",
-  ccBal:         "",
-  creditScore:   "",
-  familyChecks:  { fam1:false,fam2:false,fam3:false,fam4:false,fam5:false },
-  relocChecks:   { r1:false,r2:false,r3:false,r4:false,r5:false },
-  relocPct:      0,
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
-// App state
-// ─────────────────────────────────────────────────────────────────────────────
-let sb = null;
-let state = JSON.parse(JSON.stringify(DEFAULT));
-let saveTimer = null;
-let saveStatusTimeout = null;
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Supabase helpers
-// ─────────────────────────────────────────────────────────────────────────────
-async function initSupabase(url, key) {
-  sb = supabase.createClient(url, key);
+function setBar(barId, valId, pct) {
+  pct = Math.min(100, Math.max(0, pct));
+  const bar = document.getElementById(barId);
+  const val = document.getElementById(valId);
+  if (bar) bar.style.width = pct + '%';
+  if (val) val.textContent = Math.round(pct) + '%';
 }
 
-async function loadFromDB() {
-  const { data, error } = await sb.from("tracker").select("data").eq("id","main").single();
-  if (error) throw error;
-  return data?.data || {};
-}
-
-async function saveToDB(payload) {
-  const { error } = await sb.from("tracker").upsert({ id:"main", data:payload, updated_at: new Date().toISOString() });
-  if (error) throw error;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Render helpers
-// ─────────────────────────────────────────────────────────────────────────────
-function pct(val, max) { return Math.min(100, Math.max(0, (val/max)*100)); }
-function clamp(v,a,b) { return Math.min(b, Math.max(a, v)); }
-
-function checkPct(obj) {
-  const vals = Object.values(obj);
-  return vals.length ? (vals.filter(Boolean).length / vals.length) * 100 : 0;
-}
-
-function computed() {
-  const studyAvg   = (state.study.invest + state.study.court + state.study.pros + state.study.gig) / 4;
-  const careerPct  = (studyAvg * 0.5) + (checkPct(state.careerChecks) * 0.5);
-
-  const wStart=257, wGoal=212;
-  const wPct = state.currentWeight ? clamp(((wStart - parseFloat(state.currentWeight))/(wStart-wGoal))*100, 0, 100) : 0;
-  const ppPct = state.pushupCount  ? clamp((parseFloat(state.pushupCount)/70)*100, 0, 100) : 0;
-  const fitPct = (wPct*0.35) + (ppPct*0.2) + (state.marathonPct*0.2) + (checkPct(state.fitnessChecks)*0.25);
-
-  const revPct   = state.musicRevenue ? clamp((parseFloat(state.musicRevenue)/1000)*100,0,100) : 0;
-  const musicPct = (revPct*0.6) + (checkPct(state.musicChecks)*0.4);
-
-  const loanPct  = state.loanBal ? clamp(((16000-parseFloat(state.loanBal))/16000)*100,0,100) : 0;
-  const ccPct    = state.ccBal   ? clamp(((24000-parseFloat(state.ccBal))/24000)*100,0,100) : 0;
-  const finPct   = (loanPct*0.4) + (ccPct*0.6);
-
-  return { careerPct, fitPct, musicPct, finPct, wPct, ppPct, revPct, loanPct, ccPct };
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// DOM helpers
-// ─────────────────────────────────────────────────────────────────────────────
-function setRing(id, pctVal) {
+function setRing(ringId, pctId, pct) {
+  pct = Math.min(100, Math.max(0, pct));
   const circ = 263.9;
-  const offset = circ - (circ * clamp(pctVal,0,100) / 100);
-  const el = document.getElementById("ring-"+id);
-  const lbl = document.getElementById("rpct-"+id);
-  if (el)  el.style.strokeDashoffset = offset;
-  if (lbl) lbl.textContent = Math.round(pctVal) + "%";
+  const offset = circ - (circ * pct / 100);
+  const ring = document.getElementById(ringId);
+  const label = document.getElementById(pctId);
+  if (ring) ring.style.strokeDashoffset = offset;
+  if (label) label.textContent = Math.round(pct) + '%';
 }
 
-function setBar(id, pctVal) {
-  const fill = document.getElementById("bf-"+id);
-  const lbl  = document.getElementById("bp-"+id);
-  if (fill) fill.style.width = clamp(pctVal,0,100) + "%";
-  if (lbl)  lbl.textContent  = Math.round(clamp(pctVal,0,100)) + "%";
+// ── Date ──────────────────────────────────────────────────────────────────────
+function updateDate() {
+  const d = new Date();
+  const opts = { month: 'short', day: 'numeric', year: 'numeric' };
+  document.getElementById('today-date').textContent = d.toLocaleDateString('en-US', opts);
+}
+updateDate();
+
+// ── Sliders for study bars ─────────────────────────────────────────────────────
+const studyBars = [
+  { bar: 'bar-invest', val: 'val-invest', key: 'study-invest' },
+  { bar: 'bar-court',  val: 'val-court',  key: 'study-court' },
+  { bar: 'bar-pros',   val: 'val-pros',   key: 'study-pros' },
+  { bar: 'bar-gig',    val: 'val-gig',    key: 'study-gig' },
+];
+
+// Make study bars clickable
+studyBars.forEach(s => {
+  const track = document.getElementById(s.bar)?.parentElement;
+  if (!track) return;
+  track.style.cursor = 'pointer';
+  track.addEventListener('click', (e) => {
+    const rect = track.getBoundingClientRect();
+    const pct = Math.round(((e.clientX - rect.left) / rect.width) * 100);
+    setBar(s.bar, s.val, pct);
+    computeCareerRing();
+    autoSave();
+  });
+});
+
+// Marathon bar also clickable
+['bar-marathon'].forEach(id => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const track = el.parentElement;
+  track.style.cursor = 'pointer';
+  track.addEventListener('click', (e) => {
+    const rect = track.getBoundingClientRect();
+    const pct = Math.round(((e.clientX - rect.left) / rect.width) * 100);
+    el.style.width = pct + '%';
+    document.getElementById('val-marathon').textContent = pct + '%';
+    computeFitnessRing();
+    autoSave();
+  });
+});
+
+// Reloc bar
+const relocTrack = document.getElementById('bar-reloc')?.parentElement;
+if (relocTrack) {
+  relocTrack.style.cursor = 'pointer';
+  relocTrack.addEventListener('click', (e) => {
+    const rect = relocTrack.getBoundingClientRect();
+    const pct = Math.round(((e.clientX - rect.left) / rect.width) * 100);
+    document.getElementById('bar-reloc').style.width = pct + '%';
+    document.getElementById('val-reloc').textContent = pct + '%';
+    autoSave();
+  });
 }
 
-function updateAll() {
-  const c = computed();
-  setRing("career",  c.careerPct);
-  setRing("fitness", c.fitPct);
-  setRing("music",   c.musicPct);
-  setRing("finance", c.finPct);
+// ── Checklists ─────────────────────────────────────────────────────────────────
+function initChecklists() {
+  document.querySelectorAll('.checklist li').forEach(li => {
+    li.addEventListener('click', () => {
+      li.classList.toggle('done');
+      computeAllRings();
+      autoSave();
+    });
+  });
+}
+initChecklists();
 
-  setBar("invest",   state.study.invest);
-  setBar("court",    state.study.court);
-  setBar("pros",     state.study.pros);
-  setBar("gig",      state.study.gig);
-  setBar("weight",   c.wPct);
-  setBar("marathon", state.marathonPct);
-  setBar("pushup",   c.ppPct);
-  setBar("rev",      c.revPct);
-  setBar("loan",     c.loanPct);
-  setBar("cc",       c.ccPct);
-  setBar("reloc",    state.relocPct);
+// ── Number inputs ──────────────────────────────────────────────────────────────
+document.getElementById('current-weight')?.addEventListener('input', () => {
+  const cw = parseFloat(document.getElementById('current-weight').value) || 257;
+  const start = 257, goal = 212;
+  const pct = Math.max(0, Math.min(100, ((start - cw) / (start - goal)) * 100));
+  setBar('bar-weight', 'val-weight', pct);
+  computeFitnessRing();
+  autoSave();
+});
 
-  // push-up display
-  const ppd = document.getElementById("bp-pushup");
-  if (ppd) ppd.textContent = state.pushupCount ? Math.round(state.pushupCount) : "0";
+document.getElementById('pushup-count')?.addEventListener('input', () => {
+  const v = parseFloat(document.getElementById('pushup-count').value) || 0;
+  const pct = (v / 70) * 100;
+  setBar('bar-pushup', 'val-pushup', pct);
+  document.getElementById('val-pushup').textContent = Math.round(v);
+  computeFitnessRing();
+  autoSave();
+});
 
-  // credit score
-  const cs = document.getElementById("credit-display");
-  if (cs) cs.textContent = state.creditScore || "650";
+document.getElementById('music-revenue')?.addEventListener('input', () => {
+  const v = parseFloat(document.getElementById('music-revenue').value) || 0;
+  const pct = (v / 1000) * 100;
+  setBar('bar-rev', 'val-rev', pct);
+  computeMusicRing();
+  autoSave();
+});
+
+document.getElementById('loan-bal')?.addEventListener('input', () => {
+  const v = parseFloat(document.getElementById('loan-bal').value) ?? 16000;
+  const pct = ((16000 - v) / 16000) * 100;
+  setBar('bar-loan', 'val-loan', pct);
+  computeFinanceRing();
+  autoSave();
+});
+
+document.getElementById('cc-bal')?.addEventListener('input', () => {
+  const v = parseFloat(document.getElementById('cc-bal').value) ?? 24000;
+  const pct = ((24000 - v) / 24000) * 100;
+  setBar('bar-cc', 'val-cc', pct);
+  computeFinanceRing();
+  autoSave();
+});
+
+document.getElementById('credit-score')?.addEventListener('input', () => {
+  const v = document.getElementById('credit-score').value;
+  if (v) document.getElementById('credit-score-display').textContent = v;
+  autoSave();
+});
+
+document.getElementById('run-miles')?.addEventListener('input', autoSave);
+document.getElementById('career-notes')?.addEventListener('input', autoSave);
+
+// ── Ring calculations ──────────────────────────────────────────────────────────
+function getBarPct(barId) {
+  const el = document.getElementById(barId);
+  if (!el) return 0;
+  return parseFloat(el.style.width) || 0;
 }
 
-function triggerSave() {
-  clearTimeout(saveTimer);
-  setSaveStatus("saving");
-  saveTimer = setTimeout(async () => {
-    try {
-      await saveToDB(state);
-      setSaveStatus("saved");
-    } catch(e) {
-      setSaveStatus("error");
-    }
+function getChecklistPct(checklistId) {
+  const list = document.getElementById(checklistId);
+  if (!list) return 0;
+  const items = list.querySelectorAll('li');
+  const done = list.querySelectorAll('li.done');
+  return items.length ? (done.length / items.length) * 100 : 0;
+}
+
+function computeCareerRing() {
+  const studyAvg = (getBarPct('bar-invest') + getBarPct('bar-court') + getBarPct('bar-pros') + getBarPct('bar-gig')) / 4;
+  const checkPct = getChecklistPct('career-checklist');
+  setRing('ring-career', 'pct-career', (studyAvg * 0.5) + (checkPct * 0.5));
+}
+
+function computeFitnessRing() {
+  const weightPct = getBarPct('bar-weight');
+  const pushPct   = getBarPct('bar-pushup');
+  const runPct    = getBarPct('bar-marathon');
+  const dailyPct  = getChecklistPct('fitness-checklist');
+  setRing('ring-fitness', 'pct-fitness', (weightPct * 0.35) + (pushPct * 0.2) + (runPct * 0.2) + (dailyPct * 0.25));
+}
+
+function computeMusicRing() {
+  const revPct   = getBarPct('bar-rev');
+  const checkPct = getChecklistPct('music-checklist');
+  setRing('ring-music', 'pct-music', (revPct * 0.6) + (checkPct * 0.4));
+}
+
+function computeFinanceRing() {
+  const loanPct = getBarPct('bar-loan');
+  const ccPct   = getBarPct('bar-cc');
+  setRing('ring-finance', 'pct-finance', (loanPct * 0.4) + (ccPct * 0.6));
+}
+
+function computeAllRings() {
+  computeCareerRing();
+  computeFitnessRing();
+  computeMusicRing();
+  computeFinanceRing();
+}
+
+// ── Save / Load ────────────────────────────────────────────────────────────────
+function collectState() {
+  const checks = {};
+  document.querySelectorAll('.checklist li').forEach(li => {
+    checks[li.dataset.id] = li.classList.contains('done');
+  });
+
+  return {
+    checks,
+    studyBars: {
+      invest: parseFloat(document.getElementById('bar-invest')?.style.width) || 0,
+      court:  parseFloat(document.getElementById('bar-court')?.style.width) || 0,
+      pros:   parseFloat(document.getElementById('bar-pros')?.style.width) || 0,
+      gig:    parseFloat(document.getElementById('bar-gig')?.style.width) || 0,
+    },
+    marathon: parseFloat(document.getElementById('bar-marathon')?.style.width) || 0,
+    reloc: parseFloat(document.getElementById('bar-reloc')?.style.width) || 0,
+    weight: document.getElementById('current-weight')?.value || '',
+    pushup: document.getElementById('pushup-count')?.value || '',
+    miles:  document.getElementById('run-miles')?.value || '',
+    revenue: document.getElementById('music-revenue')?.value || '',
+    loan:   document.getElementById('loan-bal')?.value || '',
+    cc:     document.getElementById('cc-bal')?.value || '',
+    credit: document.getElementById('credit-score')?.value || '',
+    notes:  document.getElementById('career-notes')?.value || '',
+  };
+}
+
+function applyState(s) {
+  if (!s) return;
+
+  // Checks
+  if (s.checks) {
+    document.querySelectorAll('.checklist li').forEach(li => {
+      if (s.checks[li.dataset.id]) li.classList.add('done');
+    });
+  }
+
+  // Study bars
+  if (s.studyBars) {
+    setBar('bar-invest', 'val-invest', s.studyBars.invest);
+    setBar('bar-court',  'val-court',  s.studyBars.court);
+    setBar('bar-pros',   'val-pros',   s.studyBars.pros);
+    setBar('bar-gig',    'val-gig',    s.studyBars.gig);
+  }
+
+  if (s.marathon !== undefined) {
+    document.getElementById('bar-marathon').style.width = s.marathon + '%';
+    document.getElementById('val-marathon').textContent = Math.round(s.marathon) + '%';
+  }
+
+  if (s.reloc !== undefined) {
+    document.getElementById('bar-reloc').style.width = s.reloc + '%';
+    document.getElementById('val-reloc').textContent = Math.round(s.reloc) + '%';
+  }
+
+  if (s.weight) {
+    document.getElementById('current-weight').value = s.weight;
+    const start = 257, goal = 212;
+    const pct = Math.max(0, Math.min(100, ((start - parseFloat(s.weight)) / (start - goal)) * 100));
+    setBar('bar-weight', 'val-weight', pct);
+  }
+
+  if (s.pushup) {
+    document.getElementById('pushup-count').value = s.pushup;
+    const pct = (parseFloat(s.pushup) / 70) * 100;
+    setBar('bar-pushup', 'val-pushup', pct);
+    document.getElementById('val-pushup').textContent = s.pushup;
+  }
+
+  if (s.miles) document.getElementById('run-miles').value = s.miles;
+
+  if (s.revenue) {
+    document.getElementById('music-revenue').value = s.revenue;
+    setBar('bar-rev', 'val-rev', (parseFloat(s.revenue) / 1000) * 100);
+  }
+
+  if (s.loan) {
+    document.getElementById('loan-bal').value = s.loan;
+    setBar('bar-loan', 'val-loan', ((16000 - parseFloat(s.loan)) / 16000) * 100);
+  }
+
+  if (s.cc) {
+    document.getElementById('cc-bal').value = s.cc;
+    setBar('bar-cc', 'val-cc', ((24000 - parseFloat(s.cc)) / 24000) * 100);
+  }
+
+  if (s.credit) {
+    document.getElementById('credit-score').value = s.credit;
+    document.getElementById('credit-score-display').textContent = s.credit;
+  }
+
+  if (s.notes) document.getElementById('career-notes').value = s.notes;
+
+  computeAllRings();
+}
+
+let autoSaveTimer;
+function autoSave() {
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(() => {
+    try { localStorage.setItem('life-tracker-v1', JSON.stringify(collectState())); } catch(e) {}
   }, 800);
 }
 
-function setSaveStatus(status) {
-  const el = document.getElementById("save-status");
-  if (!el) return;
-  el.className = "save-status " + status;
-  const labels = { saving:"⟳ saving...", saved:"✓ saved", error:"✗ save failed", "":"Daily Tracker" };
-  el.textContent = labels[status] || "Daily Tracker";
-  clearTimeout(saveStatusTimeout);
-  if (status === "saved" || status === "error") {
-    saveStatusTimeout = setTimeout(() => {
-      el.className = "save-status";
-      el.textContent = "Daily Tracker";
-    }, 2500);
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Event handlers
-// ─────────────────────────────────────────────────────────────────────────────
-function onBarClick(e, key) {
-  const rect = e.currentTarget.getBoundingClientRect();
-  const p = Math.round(clamp(((e.clientX - rect.left) / rect.width) * 100, 0, 100));
-  if (key.includes(".")) {
-    const [group, field] = key.split(".");
-    state[group][field] = p;
-  } else {
-    state[key] = p;
-  }
-  updateAll();
-  triggerSave();
-}
-
-function onCheck(group, key) {
-  state[group][key] = !state[group][key];
-  const li = document.querySelector(`[data-check="${group}.${key}"]`);
-  if (li) li.classList.toggle("done", state[group][key]);
-  updateAll();
-  triggerSave();
-}
-
-function onNumberInput(field, value) {
-  state[field] = value;
-  updateAll();
-  triggerSave();
-}
-
-function onTextInput(field, value) {
-  state[field] = value;
-  triggerSave();
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// HTML Builders
-// ─────────────────────────────────────────────────────────────────────────────
-function ring(id, color, label, sublabel) {
-  return `
-  <div class="ring-wrap">
-    <div class="ring-container">
-      <svg class="ring-svg" width="100" height="100" viewBox="0 0 100 100">
-        <circle class="ring-bg" cx="50" cy="50" r="42"/>
-        <circle class="ring-fill" id="ring-${id}" cx="50" cy="50" r="42" style="stroke:${color}"/>
-      </svg>
-      <div class="ring-label-inner">
-        <span class="ring-pct" id="rpct-${id}">0%</span>
-        <span class="ring-sub">${sublabel}</span>
-      </div>
-    </div>
-    <span class="ring-name">${label}</span>
-  </div>`;
-}
-
-function bar(id, label, colorClass="", clickable=true) {
-  return `
-  <div class="bar-wrap">
-    <div class="bar-meta">
-      <span class="bar-label">${label}</span>
-      <span class="bar-pct" id="bp-${id}">0%</span>
-    </div>
-    <div class="bar-track ${clickable ? '' : 'no-click'}" ${clickable ? `onclick="onBarClick(event,'${id}')"` : ''}>
-      <div class="bar-fill ${colorClass}" id="bf-${id}" style="width:0%"></div>
-    </div>
-  </div>`;
-}
-
-function checkItem(group, key, label) {
-  const done = state[group][key];
-  return `
-  <li class="${done?'done':''}" data-check="${group}.${key}" onclick="onCheck('${group}','${key}')">
-    <div class="check-box"></div>
-    <span>${label}</span>
-  </li>`;
-}
-
-function statBox(label, value, cls="", sub="") {
-  return `
-  <div class="stat-box">
-    <div class="stat-label">${label}</div>
-    <div class="stat-value ${cls}">${value}</div>
-    ${sub ? `<div class="stat-sub">${sub}</div>` : ''}
-  </div>`;
-}
-
-function numField(label, field, placeholder, min="0", max="99999", step="1") {
-  return `
-  <div>
-    <label class="field-label">${label}</label>
-    <input type="number" value="${state[field]||''}" placeholder="${placeholder}"
-      min="${min}" max="${max}" step="${step}"
-      oninput="onNumberInput('${field}',this.value)"/>
-  </div>`;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Full render
-// ─────────────────────────────────────────────────────────────────────────────
-function render() {
-  const today = new Date().toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
-
-  document.getElementById("root").innerHTML = `
-  <div class="app">
-
-    <header>
-      <div>
-        <h1>YOUR <span>PROGRESS</span></h1>
-        <p>Three Lanes · One Mission · All In</p>
-      </div>
-      <div class="date-badge">
-        <strong>${today}</strong>
-        <span id="save-status" class="save-status">Daily Tracker</span>
-      </div>
-    </header>
-
-    <div class="mission">
-      <strong>Core Mission</strong>
-      Becoming a stronger man for your family while building long-term stability —
-      as a father, a federal investigator, a disciplined man, and a music creator.
-    </div>
-
-    <!-- Score Rings -->
-    <div class="section">
-      <div class="section-label"><span>Weekly Score</span></div>
-      <div class="card">
-        <div class="rings-row">
-          ${ring("career",  "#c9a84c", "1811 Path",           "career" )}
-          ${ring("fitness", "#22c55e", "Body Transformation",  "fitness")}
-          ${ring("music",   "#3b82f6", "Studio Growth",        "music"  )}
-          ${ring("finance", "#c9a84c", "Debt Elimination",     "debt"   )}
-        </div>
-      </div>
-    </div>
-
-    <hr/>
-
-    <!-- CAREER -->
-    <div class="section">
-      <div class="section-label"><span>Lane 01 — Career · 1811 Path</span></div>
-      <div class="grid-2">
-
-        <div class="card">
-          <div class="card-title"><div class="dot"></div> Study Progress</div>
-          ${bar("invest",   "Federal Investigative Work", "",      true)}
-          ${bar("court",    "Court Procedures",           "",      true)}
-          ${bar("pros",     "Prosecutorial Standards",    "",      true)}
-          ${bar("gig",      "Giglio / Credibility Rules", "",      true)}
-          <div class="tags">
-            <span class="tag gold">HSI</span>
-            <span class="tag gold">ATF</span>
-            <span class="tag gold">Transnational Crime</span>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-title"><div class="dot"></div> Application Checklist</div>
-          <ul class="checklist">
-            ${checkItem("careerChecks","c1","Update federal resume (USAJobs format)")}
-            ${checkItem("careerChecks","c2","Request letters of recommendation")}
-            ${checkItem("careerChecks","c3","Research current 1811 openings")}
-            ${checkItem("careerChecks","c4","Submit first application (HSI or ATF)")}
-            ${checkItem("careerChecks","c5","Review Giglio case law")}
-            ${checkItem("careerChecks","c6","Network with current 1811 agents")}
-            ${checkItem("careerChecks","c7","Complete structured interview prep")}
-          </ul>
-        </div>
-      </div>
-
-      <div style="margin-top:16px">
-        <div class="card">
-          <div class="card-title"><div class="dot"></div> Study Log &amp; Notes</div>
-          <textarea placeholder="What did you study today? Cases reviewed, key concepts, insights..."
-            oninput="onTextInput('careerNotes',this.value)">${state.careerNotes}</textarea>
-        </div>
-      </div>
-    </div>
-
-    <hr/>
-
-    <!-- FITNESS -->
-    <div class="section">
-      <div class="section-label"><span>Lane 02 — Body Transformation · 90-Day Cut</span></div>
-      <div class="grid-3">
-
-        <div class="card">
-          <div class="card-title"><div class="dot green"></div> Weight</div>
-          ${statBox("Starting Weight","257 lbs")}
-          ${statBox("Goal Weight","212 lbs","","–45 lbs in 90 days")}
-          ${numField("Current Weight (lbs)","currentWeight","257","100","350")}
-          <div style="margin-top:12px">
-            ${bar("weight","Fat Loss Progress","green",false)}
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-title"><div class="dot green"></div> Daily Targets</div>
-          <ul class="checklist">
-            ${checkItem("fitnessChecks","f1","200g+ protein hit today")}
-            ${checkItem("fitnessChecks","f2","Calorie deficit maintained")}
-            ${checkItem("fitnessChecks","f3","Strength training session done")}
-            ${checkItem("fitnessChecks","f4","Cardio session done")}
-            ${checkItem("fitnessChecks","f5","8h sleep target")}
-            ${checkItem("fitnessChecks","f6","Supplements taken")}
-          </ul>
-        </div>
-
-        <div class="card">
-          <div class="card-title"><div class="dot green"></div> Performance Goals</div>
-          ${bar("marathon","Marathon Readiness","green",true)}
-          ${bar("pushup","Push-ups / min (goal: 70)","green",false)}
-          <div style="margin-top:12px; display:flex; flex-direction:column; gap:10px;">
-            <div class="inline-row">
-              <label>Best push-ups / min</label>
-              <input type="number" value="${state.pushupCount||''}" placeholder="0" min="0" max="100"
-                oninput="onNumberInput('pushupCount',this.value)" style="width:90px;text-align:center"/>
-            </div>
-            <div class="inline-row">
-              <label>Longest run (mi)</label>
-              <input type="number" value="${state.runMiles||''}" placeholder="0" min="0" max="26.2" step="0.1"
-                oninput="onNumberInput('runMiles',this.value)" style="width:90px;text-align:center"/>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <hr/>
-
-    <!-- MUSIC -->
-    <div class="section">
-      <div class="section-label"><span>Lane 03 — Music Business · Studio Growth</span></div>
-      <div class="grid-2">
-
-        <div class="card">
-          <div class="card-title"><div class="dot blue"></div> Revenue Tracker</div>
-          ${statBox("Monthly Revenue Goal","$1,000","gold")}
-          ${numField("Revenue This Month ($)","musicRevenue","0","0","999999")}
-          <div style="margin-top:12px">
-            ${bar("rev","Toward $1k / month","blue",false)}
-          </div>
-          <div class="tags">
-            <span class="tag blue">Beats</span>
-            <span class="tag blue">Mix/Master</span>
-            <span class="tag blue">Recording</span>
-            <span class="tag blue">Sync Licensing</span>
-            <span class="tag blue">Artist Mgmt</span>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-title"><div class="dot blue"></div> Artist Development</div>
-          ${statBox("Signed Clients","1","blue","$300 package · Latin Urban · R&B · Local Indie")}
-          <ul class="checklist">
-            ${checkItem("musicChecks","m1","Deliver on current artist's package")}
-            ${checkItem("musicChecks","m2","Complete a release strategy for client")}
-            ${checkItem("musicChecks","m3","Outreach to 1 new potential client")}
-            ${checkItem("musicChecks","m4","Upload 1 new beat to catalog")}
-            ${checkItem("musicChecks","m5","Research sync licensing opportunities")}
-            ${checkItem("musicChecks","m6","Post studio content on social media")}
-          </ul>
-        </div>
-      </div>
-    </div>
-
-    <hr/>
-
-    <!-- FINANCE -->
-    <div class="section">
-      <div class="section-label"><span>Finance — Debt Elimination</span></div>
-      <div class="grid-3">
-
-        <div class="card">
-          <div class="card-title"><div class="dot"></div> Student Loans</div>
-          ${statBox("Starting Balance","$16,000")}
-          ${numField("Remaining Balance ($)","loanBal","16000","0","16000")}
-          <div style="margin-top:12px">${bar("loan","Paid Off","",false)}</div>
-        </div>
-
-        <div class="card">
-          <div class="card-title"><div class="dot"></div> Wife's CC Debt</div>
-          ${statBox("Starting Balance","$24,000")}
-          ${numField("Remaining Balance ($)","ccBal","24000","0","24000")}
-          <div style="margin-top:12px">${bar("cc","Paid Off","",false)}</div>
-        </div>
-
-        <div class="card">
-          <div class="card-title"><div class="dot"></div> Overview</div>
-          ${statBox("Total Starting Debt","$32,000")}
-          <div id="credit-score-box" class="stat-box">
-            <div class="stat-label">Credit Score</div>
-            <div class="stat-value gold" id="credit-display">${state.creditScore||"650"}</div>
-            <div class="stat-sub">Update as it improves</div>
-          </div>
-          ${numField("Current Credit Score","creditScore","650","300","850")}
-        </div>
-      </div>
-    </div>
-
-    <hr/>
-
-    <!-- FAMILY -->
-    <div class="section">
-      <div class="section-label"><span>Family · Relocation Planning</span></div>
-      <div class="grid-2">
-
-        <div class="card">
-          <div class="card-title"><div class="dot"></div> Family Priorities</div>
-          <ul class="checklist">
-            ${checkItem("familyChecks","fam1","Son's childcare arrangement confirmed")}
-            ${checkItem("familyChecks","fam2","Support wife through postpartum this week")}
-            ${checkItem("familyChecks","fam3","Quality 1-on-1 time with son today")}
-            ${checkItem("familyChecks","fam4","Family dinner / intentional connection")}
-            ${checkItem("familyChecks","fam5","Rest properly (not just for fitness)")}
-          </ul>
-        </div>
-
-        <div class="card">
-          <div class="card-title"><div class="dot"></div> Relocation (~18 months)</div>
-          ${bar("reloc","Relocation Readiness","multi",true)}
-          <ul class="checklist" style="margin-top:8px">
-            ${checkItem("relocChecks","r1","Research Miami COL vs salary for 1811")}
-            ${checkItem("relocChecks","r2","Research NYC / Charlotte options")}
-            ${checkItem("relocChecks","r3","Start relocation savings fund")}
-            ${checkItem("relocChecks","r4","Align relocation with 1811 placement")}
-            ${checkItem("relocChecks","r5","Research school districts / neighborhoods")}
-          </ul>
-        </div>
-      </div>
-    </div>
-
-    <footer>
-      <p>Progress auto-saves to Supabase · Click bars to set % · Data syncs across all devices</p>
-    </footer>
-
-  </div>`;
-
-  // Animate rings in after paint
-  requestAnimationFrame(() => setTimeout(updateAll, 100));
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Setup screen (when keys not yet configured)
-// ─────────────────────────────────────────────────────────────────────────────
-function renderSetup() {
-  document.getElementById("root").innerHTML = `
-  <div class="setup">
-    <div class="setup-card">
-      <h2>Connect Supabase</h2>
-      <p>Enter your Supabase project URL and anon key to connect your tracker to the cloud. Your data will sync across every device.</p>
-      <div class="setup-field">
-        <label class="field-label">Supabase Project URL</label>
-        <input type="text" id="setup-url" placeholder="https://xxxx.supabase.co" style="width:100%;padding:10px 12px;border-radius:8px;font-family:'DM Mono',monospace;font-size:0.82rem"/>
-      </div>
-      <div class="setup-field">
-        <label class="field-label">Anon Public Key</label>
-        <input type="text" id="setup-key" placeholder="eyJhbGciOiJIUzI1NiIs..." style="width:100%;padding:10px 12px;border-radius:8px;font-family:'DM Mono',monospace;font-size:0.82rem"/>
-      </div>
-      <button class="setup-btn" onclick="handleSetup()">Connect & Load Tracker</button>
-      <div id="setup-error" class="setup-error"></div>
-    </div>
-  </div>`;
-}
-
-async function handleSetup() {
-  const url = document.getElementById("setup-url").value.trim();
-  const key = document.getElementById("setup-key").value.trim();
-  const errEl = document.getElementById("setup-error");
-  if (!url || !key) { errEl.textContent = "Please enter both fields."; return; }
-
-  errEl.textContent = "";
-  document.querySelector(".setup-btn").textContent = "Connecting...";
-
+function saveAll() {
   try {
-    await initSupabase(url, key);
-    const saved = await loadFromDB();
-    state = { ...JSON.parse(JSON.stringify(DEFAULT)), ...saved };
-    // Persist keys in localStorage for next visit
-    localStorage.setItem("sb_url", url);
-    localStorage.setItem("sb_key", key);
-    render();
-  } catch(e) {
-    document.querySelector(".setup-btn").textContent = "Connect & Load Tracker";
-    errEl.textContent = "Connection failed. Check your URL and key.";
-  }
+    localStorage.setItem('life-tracker-v1', JSON.stringify(collectState()));
+    const msg = document.getElementById('save-msg');
+    msg.classList.add('show');
+    setTimeout(() => msg.classList.remove('show'), 2500);
+  } catch(e) {}
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Boot
-// ─────────────────────────────────────────────────────────────────────────────
-async function boot() {
-  document.getElementById("root").innerHTML = `
-    <div class="loading">
-      <div class="spinner"></div>
-      <p>Loading tracker...</p>
-    </div>`;
+// Load on startup
+try {
+  const saved = localStorage.getItem('life-tracker-v1');
+  if (saved) applyState(JSON.parse(saved));
+} catch(e) {}
 
-  // Check if keys are hardcoded in the file
-  if (!SETUP_NEEDED) {
-    try {
-      await initSupabase(SUPABASE_URL, SUPABASE_KEY);
-      const saved = await loadFromDB();
-      state = { ...JSON.parse(JSON.stringify(DEFAULT)), ...saved };
-      render();
-      return;
-    } catch(e) {}
-  }
-
-  // Check if keys are saved in localStorage (returning visitor)
-  const cachedUrl = localStorage.getItem("sb_url");
-  const cachedKey = localStorage.getItem("sb_key");
-  if (cachedUrl && cachedKey) {
-    try {
-      await initSupabase(cachedUrl, cachedKey);
-      const saved = await loadFromDB();
-      state = { ...JSON.parse(JSON.stringify(DEFAULT)), ...saved };
-      render();
-      return;
-    } catch(e) {
-      localStorage.removeItem("sb_url");
-      localStorage.removeItem("sb_key");
-    }
-  }
-
-  // Show setup screen
-  renderSetup();
-}
-
-boot();
+// Animate rings in on load
+setTimeout(computeAllRings, 300);
 </script>
 </body>
 </html>
