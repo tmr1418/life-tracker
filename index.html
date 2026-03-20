@@ -1,1186 +1,643 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Progress Tracker</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --bg: #0a0a0b;
-    --surface: #111114;
-    --card: #17171c;
-    --border: #222228;
-    --accent-gold: #c9a84c;
-    --accent-blue: #3b82f6;
-    --accent-green: #22c55e;
-    --accent-red: #ef4444;
-    --text: #f0f0f0;
-    --muted: #6b6b7a;
-    --subtle: #2a2a32;
-  }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  /* Grain overlay */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-    pointer-events: none;
-    z-index: 0;
-    opacity: 0.6;
-  }
-
-  .container {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 40px 24px;
-    position: relative;
-    z-index: 1;
-  }
-
-  /* Header */
-  header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    margin-bottom: 48px;
-    padding-bottom: 24px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .header-left h1 {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: clamp(2.5rem, 6vw, 4rem);
-    letter-spacing: 0.04em;
-    line-height: 1;
-    color: var(--text);
-  }
-
-  .header-left h1 span {
-    color: var(--accent-gold);
-  }
-
-  .header-left p {
-    color: var(--muted);
-    font-size: 0.85rem;
-    margin-top: 6px;
-    font-family: 'DM Mono', monospace;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .date-badge {
-    background: var(--subtle);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 16px;
-    font-family: 'DM Mono', monospace;
-    font-size: 0.8rem;
-    color: var(--muted);
-    text-align: right;
-  }
-
-  .date-badge strong {
-    display: block;
-    color: var(--accent-gold);
-    font-size: 1.1rem;
-  }
-
-  /* Mission Banner */
-  .mission {
-    background: linear-gradient(135deg, rgba(201,168,76,0.12), rgba(201,168,76,0.04));
-    border: 1px solid rgba(201,168,76,0.3);
-    border-left: 4px solid var(--accent-gold);
-    border-radius: 8px;
-    padding: 20px 24px;
-    margin-bottom: 40px;
-    font-size: 0.95rem;
-    color: #d4bc7a;
-    font-style: italic;
-    line-height: 1.6;
-  }
-
-  .mission strong {
-    font-style: normal;
-    color: var(--accent-gold);
-    font-family: 'DM Mono', monospace;
-    font-size: 0.7rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    display: block;
-    margin-bottom: 6px;
-  }
-
-  /* Lanes */
-  .lanes {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    margin-bottom: 40px;
-  }
-
-  .lane-pill {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 14px 18px;
-    text-align: center;
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 1rem;
-    letter-spacing: 0.1em;
-    color: var(--muted);
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .lane-pill.active, .lane-pill:hover {
-    border-color: var(--accent-gold);
-    color: var(--accent-gold);
-    background: rgba(201,168,76,0.06);
-  }
-
-  .lane-pill .lane-icon { font-size: 1.2rem; display: block; margin-bottom: 4px; }
-
-  /* Section headers */
-  .section-label {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.7rem;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .section-label::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--border);
-  }
-
-  /* Grid layouts */
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-
-  /* Cards */
-  .card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 20px;
-    transition: border-color 0.2s;
-  }
-
-  .card:hover { border-color: #333340; }
-
-  .card-title {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.15rem;
-    letter-spacing: 0.06em;
-    color: var(--text);
-    margin-bottom: 14px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .card-title .dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--accent-gold);
-    flex-shrink: 0;
-  }
-
-  .card-title .dot.blue { background: var(--accent-blue); }
-  .card-title .dot.green { background: var(--accent-green); }
-  .card-title .dot.red { background: var(--accent-red); }
-
-  /* Progress bars */
-  .progress-wrap { margin-bottom: 14px; }
-
-  .progress-meta {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    margin-bottom: 6px;
-  }
-
-  .progress-name {
-    font-size: 0.82rem;
-    color: #b0b0be;
-  }
-
-  .progress-value {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.78rem;
-    color: var(--muted);
-  }
-
-  .bar-track {
-    height: 6px;
-    background: var(--subtle);
-    border-radius: 99px;
-    overflow: hidden;
-  }
-
-  .bar-fill {
-    height: 100%;
-    border-radius: 99px;
-    background: var(--accent-gold);
-    transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
-    position: relative;
-  }
-
-  .bar-fill.blue { background: var(--accent-blue); }
-  .bar-fill.green { background: var(--accent-green); }
-  .bar-fill.red { background: var(--accent-red); }
-  .bar-fill.multi { background: linear-gradient(90deg, var(--accent-blue), var(--accent-green)); }
-
-  /* Stat boxes */
-  .stat-box {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 14px 16px;
-    margin-bottom: 10px;
-  }
-
-  .stat-box-label {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.65rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 4px;
-  }
-
-  .stat-box-value {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.6rem;
-    letter-spacing: 0.04em;
-    color: var(--text);
-  }
-
-  .stat-box-value.gold { color: var(--accent-gold); }
-  .stat-box-value.green { color: var(--accent-green); }
-  .stat-box-value.blue { color: var(--accent-blue); }
-
-  .stat-box-sub {
-    font-size: 0.75rem;
-    color: var(--muted);
-    margin-top: 2px;
-  }
-
-  /* Checklist */
-  .checklist { list-style: none; }
-
-  .checklist li {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--subtle);
-    font-size: 0.85rem;
-    color: #b0b0be;
-    cursor: pointer;
-    transition: color 0.15s;
-  }
-
-  .checklist li:last-child { border-bottom: none; }
-  .checklist li:hover { color: var(--text); }
-
-  .check-box {
-    width: 16px; height: 16px;
-    border: 1.5px solid var(--muted);
-    border-radius: 4px;
-    flex-shrink: 0;
-    margin-top: 1px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.15s;
-  }
-
-  .checklist li.done .check-box {
-    background: var(--accent-gold);
-    border-color: var(--accent-gold);
-  }
-
-  .checklist li.done .check-box::after {
-    content: '✓';
-    font-size: 10px;
-    color: #000;
-    font-weight: 700;
-  }
-
-  .checklist li.done span { text-decoration: line-through; color: var(--muted); }
-
-  /* Number input tracker */
-  .number-input-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 10px;
-  }
-
-  .num-label { font-size: 0.82rem; color: #b0b0be; flex: 1; }
-
-  .num-input {
-    background: var(--subtle);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    color: var(--text);
-    font-family: 'DM Mono', monospace;
-    font-size: 0.85rem;
-    padding: 6px 10px;
-    width: 80px;
-    text-align: center;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-
-  .num-input:focus { border-color: var(--accent-gold); }
-
-  /* Tags */
-  .tag {
-    display: inline-block;
-    background: var(--subtle);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 2px 8px;
-    font-size: 0.7rem;
-    font-family: 'DM Mono', monospace;
-    color: var(--muted);
-    margin: 2px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-  }
-
-  .tag.gold { background: rgba(201,168,76,0.1); border-color: rgba(201,168,76,0.3); color: var(--accent-gold); }
-  .tag.blue { background: rgba(59,130,246,0.1); border-color: rgba(59,130,246,0.3); color: var(--accent-blue); }
-  .tag.green { background: rgba(34,197,94,0.1); border-color: rgba(34,197,94,0.3); color: var(--accent-green); }
-
-  /* Notes area */
-  .notes-input {
-    width: 100%;
-    background: var(--subtle);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.85rem;
-    padding: 12px 14px;
-    resize: vertical;
-    min-height: 80px;
-    outline: none;
-    transition: border-color 0.2s;
-    line-height: 1.5;
-  }
-
-  .notes-input:focus { border-color: var(--accent-gold); }
-
-  /* Divider */
-  .divider { margin: 32px 0; border: none; border-top: 1px solid var(--border); }
-
-  /* Score ring */
-  .score-ring-wrap {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 10px 0;
-  }
-
-  .ring-container { position: relative; width: 100px; height: 100px; }
-
-  .ring-svg { transform: rotate(-90deg); }
-
-  .ring-bg { fill: none; stroke: var(--subtle); stroke-width: 8; }
-  .ring-fill { fill: none; stroke: var(--accent-gold); stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 0.8s ease; }
-  .ring-fill.blue { stroke: var(--accent-blue); }
-  .ring-fill.green { stroke: var(--accent-green); }
-
-  .ring-label {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .ring-pct {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.6rem;
-    letter-spacing: 0.04em;
-    color: var(--text);
-    line-height: 1;
-  }
-
-  .ring-name {
-    font-size: 0.6rem;
-    color: var(--muted);
-    font-family: 'DM Mono', monospace;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    margin-top: 2px;
-  }
-
-  .ring-title {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.65rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-top: 10px;
-  }
-
-  /* Section spacing */
-  .section { margin-bottom: 36px; }
-
-  /* Responsive */
-  @media (max-width: 768px) {
-    .grid-2, .grid-3, .lanes { grid-template-columns: 1fr; }
-    header { flex-direction: column; align-items: flex-start; gap: 16px; }
-  }
-
-  @media (max-width: 600px) {
-    .grid-2 { grid-template-columns: 1fr; }
-  }
-
-  /* Save button */
-  .save-btn {
-    background: var(--accent-gold);
-    color: #000;
-    border: none;
-    border-radius: 8px;
-    padding: 12px 28px;
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 1rem;
-    letter-spacing: 0.1em;
-    cursor: pointer;
-    transition: opacity 0.2s;
-    display: block;
-    margin: 0 auto 40px;
-  }
-
-  .save-btn:hover { opacity: 0.85; }
-
-  .save-msg {
-    text-align: center;
-    font-family: 'DM Mono', monospace;
-    font-size: 0.75rem;
-    color: var(--accent-green);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    height: 20px;
-    margin-top: -30px;
-    margin-bottom: 30px;
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-
-  .save-msg.show { opacity: 1; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0b;--surface:#111114;--card:#17171c;--border:#222228;
+  --gold:#c9a84c;--blue:#3b82f6;--green:#22c55e;--red:#ef4444;--orange:#f97316;
+  --text:#f0f0f0;--muted:#6b6b7a;--subtle:#2a2a32;
+}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:0.6}
+.wrap{max-width:1100px;margin:0 auto;padding:40px 20px 60px;position:relative;z-index:1}
+header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:36px;padding-bottom:24px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:16px}
+header h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(2.2rem,6vw,3.8rem);letter-spacing:0.04em;line-height:1}
+header h1 span{color:var(--gold)}
+header p{color:var(--muted);font-size:0.78rem;margin-top:6px;font-family:'DM Mono',monospace;letter-spacing:0.1em;text-transform:uppercase}
+.date-badge{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 16px;text-align:right}
+.date-badge strong{display:block;font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:var(--gold)}
+.date-badge span{font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--muted)}
+.mission{background:rgba(201,168,76,0.07);border:1px solid rgba(201,168,76,0.25);border-left:4px solid var(--gold);border-radius:8px;padding:18px 22px;margin-bottom:36px;font-size:0.92rem;color:#d4bc7a;font-style:italic;line-height:1.6}
+.mission strong{font-style:normal;color:var(--gold);font-family:'DM Mono',monospace;font-size:0.65rem;letter-spacing:0.14em;text-transform:uppercase;display:block;margin-bottom:6px}
+.sl{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.sl span{font-family:'DM Mono',monospace;font-size:0.68rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.sl::after{content:'';flex:1;height:1px;background:var(--border)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px}
+.ct{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:0.06em;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0}
+.dot.blue{background:var(--blue)}.dot.green{background:var(--green)}.dot.red{background:var(--red)}.dot.orange{background:var(--orange)}
+.g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.g3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.rings-row{display:flex;justify-content:space-around;flex-wrap:wrap;gap:24px;padding:10px 0}
+.ring-wrap{display:flex;flex-direction:column;align-items:center;gap:8px}
+.ring-container{position:relative;width:100px;height:100px}
+.ring-svg{transform:rotate(-90deg)}
+.ring-bg{fill:none;stroke:var(--subtle);stroke-width:8}
+.ring-fill{fill:none;stroke-width:8;stroke-linecap:round;stroke-dasharray:263.9;stroke-dashoffset:263.9;transition:stroke-dashoffset 0.8s cubic-bezier(0.4,0,0.2,1)}
+.ring-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.rpct{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:var(--text);line-height:1}
+.rsub{font-family:'DM Mono',monospace;font-size:0.55rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-top:2px}
+.rname{font-family:'DM Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)}
+.bw{margin-bottom:12px}
+.bm{display:flex;justify-content:space-between;margin-bottom:5px}
+.bl{font-size:0.82rem;color:#b0b0be}
+.bp{font-family:'DM Mono',monospace;font-size:0.75rem;color:var(--muted)}
+.bt{height:6px;background:var(--subtle);border-radius:99px;overflow:hidden}
+.bt.click{cursor:pointer}
+.bf{height:100%;border-radius:99px;background:var(--gold);transition:width 0.5s ease}
+.bf.blue{background:var(--blue)}.bf.green{background:var(--green)}.bf.red{background:var(--red)}
+.cl{list-style:none}
+.cl li{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid #1e1e24;cursor:pointer}
+.cl li:last-child{border-bottom:none}
+.cb{width:16px;height:16px;border-radius:4px;flex-shrink:0;margin-top:1px;border:1.5px solid var(--muted);display:flex;align-items:center;justify-content:center;transition:all 0.15s}
+.cl li.done .cb{background:var(--gold);border-color:var(--gold)}
+.cl li.done .cb::after{content:'✓';font-size:10px;color:#000;font-weight:700}
+.cl li span{font-size:0.83rem;color:#b0b0be;line-height:1.4}
+.cl li.done span{text-decoration:line-through;color:var(--muted)}
+.sb{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:10px}
+.sl2{font-family:'DM Mono',monospace;font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.sv{font-family:'Bebas Neue',sans-serif;font-size:1.55rem;letter-spacing:0.04em;color:var(--text)}
+.sv.gold{color:var(--gold)}.sv.blue{color:var(--blue)}.sv.green{color:var(--green)}
+.ss{font-size:0.73rem;color:var(--muted);margin-top:2px}
+.fl{font-family:'DM Mono',monospace;font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:block}
+input[type=number],textarea{background:var(--subtle);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Mono',monospace;font-size:0.85rem;padding:8px 12px;outline:none;transition:border-color 0.2s;width:100%}
+input[type=number]:focus,textarea:focus{border-color:var(--gold)}
+input[type=number]::-webkit-inner-spin-button{opacity:0.4}
+textarea{resize:vertical;min-height:80px;font-family:'DM Sans',sans-serif;font-size:0.85rem;line-height:1.5}
+.tag{display:inline-block;border-radius:4px;padding:2px 8px;font-size:0.68rem;font-family:'DM Mono',monospace;margin:2px;text-transform:uppercase;letter-spacing:0.08em}
+.tag.gold{background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:var(--gold)}
+.tag.blue{background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);color:var(--blue)}
+.tag.green{background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);color:var(--green)}
+.iq-card{background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.2);border-radius:10px;padding:16px 18px;margin-bottom:14px}
+.iq-num{font-family:'DM Mono',monospace;font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+.iq-q{font-size:0.9rem;color:#e0d4b0;line-height:1.6;font-style:italic;margin-bottom:10px}
+.iq-card textarea{min-height:70px;background:rgba(0,0,0,0.3);border-color:rgba(201,168,76,0.15);font-size:0.82rem}
+.week-badge{display:inline-block;background:var(--subtle);border:1px solid var(--border);border-radius:6px;padding:4px 12px;font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:16px}
+.pr-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.pr-box{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px}
+.pr-label{font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.pr-val{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--text);margin-bottom:6px}
+.disc-card{background:rgba(239,68,68,0.04);border:1px solid rgba(239,68,68,0.15);border-radius:12px;padding:20px}
+.save-btn{background:var(--gold);color:#000;border:none;border-radius:8px;padding:12px 28px;font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:0.1em;cursor:pointer;transition:opacity 0.2s;display:block;margin:0 auto 40px}
+.save-btn:hover{opacity:0.85}
+.save-msg{text-align:center;font-family:'DM Mono',monospace;font-size:0.75rem;color:var(--green);letter-spacing:0.1em;text-transform:uppercase;height:20px;margin-top:-30px;margin-bottom:30px;opacity:0;transition:opacity 0.3s}
+.save-msg.show{opacity:1}
+hr{border:none;border-top:1px solid var(--border);margin:32px 0}
+.section{margin-bottom:36px}
+@media(max-width:600px){.g2,.g3{grid-template-columns:1fr}.rings-row{gap:16px}}
 </style>
 </head>
 <body>
-<div class="container">
+<div class="wrap">
 
-  <header>
-    <div class="header-left">
-      <h1>YOUR <span>PROGRESS</span></h1>
-      <p>Three Lanes · One Mission · All In</p>
-    </div>
-    <div class="date-badge">
-      <strong id="today-date"></strong>
-      <span>Daily Tracker</span>
-    </div>
-  </header>
-
-  <div class="mission">
-    <strong>Core Mission</strong>
-    Becoming a stronger man for your family while building long-term stability — as a father, a federal investigator, a disciplined man, and a music creator.
+<header>
+  <div>
+    <h1>YOUR <span>PROGRESS</span></h1>
+    <p>Three Lanes · One Mission · All In</p>
   </div>
-
-  <!-- LANE OVERVIEW -->
-  <div class="lanes">
-    <div class="lane-pill active"><span class="lane-icon">🏛️</span>Career · 1811</div>
-    <div class="lane-pill"><span class="lane-icon">👨‍👩‍👦</span>Family · Leadership</div>
-    <div class="lane-pill"><span class="lane-icon">🎵</span>Music · Studio</div>
+  <div class="date-badge">
+    <strong id="today-date"></strong>
+    <span id="save-status">Daily Tracker</span>
   </div>
+</header>
 
-  <!-- OVERALL SCORES -->
-  <div class="section">
-    <div class="section-label">Weekly Score</div>
-    <div class="card">
-      <div style="display:flex; justify-content:space-around; flex-wrap:wrap; gap:20px; padding: 10px 0;">
-
-        <div class="score-ring-wrap">
-          <div class="ring-container">
-            <svg class="ring-svg" width="100" height="100" viewBox="0 0 100 100">
-              <circle class="ring-bg" cx="50" cy="50" r="42"/>
-              <circle class="ring-fill" id="ring-career" cx="50" cy="50" r="42"
-                stroke-dasharray="263.9" stroke-dashoffset="263.9"/>
-            </svg>
-            <div class="ring-label">
-              <span class="ring-pct" id="pct-career">0%</span>
-              <span class="ring-name">career</span>
-            </div>
-          </div>
-          <div class="ring-title">1811 Path</div>
-        </div>
-
-        <div class="score-ring-wrap">
-          <div class="ring-container">
-            <svg class="ring-svg" width="100" height="100" viewBox="0 0 100 100">
-              <circle class="ring-bg" cx="50" cy="50" r="42"/>
-              <circle class="ring-fill green" id="ring-fitness" cx="50" cy="50" r="42"
-                stroke-dasharray="263.9" stroke-dashoffset="263.9"/>
-            </svg>
-            <div class="ring-label">
-              <span class="ring-pct" id="pct-fitness">0%</span>
-              <span class="ring-name">fitness</span>
-            </div>
-          </div>
-          <div class="ring-title">Body Transformation</div>
-        </div>
-
-        <div class="score-ring-wrap">
-          <div class="ring-container">
-            <svg class="ring-svg" width="100" height="100" viewBox="0 0 100 100">
-              <circle class="ring-bg" cx="50" cy="50" r="42"/>
-              <circle class="ring-fill blue" id="ring-music" cx="50" cy="50" r="42"
-                stroke-dasharray="263.9" stroke-dashoffset="263.9"/>
-            </svg>
-            <div class="ring-label">
-              <span class="ring-pct" id="pct-music">0%</span>
-              <span class="ring-name">music</span>
-            </div>
-          </div>
-          <div class="ring-title">Studio Growth</div>
-        </div>
-
-        <div class="score-ring-wrap">
-          <div class="ring-container">
-            <svg class="ring-svg" width="100" height="100" viewBox="0 0 100 100">
-              <circle class="ring-bg" cx="50" cy="50" r="42"/>
-              <circle class="ring-fill" id="ring-finance" cx="50" cy="50" r="42"
-                stroke-dasharray="263.9" stroke-dashoffset="263.9"/>
-            </svg>
-            <div class="ring-label">
-              <span class="ring-pct" id="pct-finance">0%</span>
-              <span class="ring-name">debt</span>
-            </div>
-          </div>
-          <div class="ring-title">Debt Elimination</div>
-        </div>
-
-      </div>
-    </div>
-  </div>
-
-  <hr class="divider">
-
-  <!-- LANE 1: CAREER -->
-  <div class="section">
-    <div class="section-label">Lane 01 — Career · 1811 Path</div>
-    <div class="grid-2">
-
-      <div class="card">
-        <div class="card-title"><span class="dot"></span> Study Progress</div>
-        <div class="progress-wrap">
-          <div class="progress-meta"><span class="progress-name">Federal Investigative Work</span><span class="progress-value" id="val-invest">0%</span></div>
-          <div class="bar-track"><div class="bar-fill" id="bar-invest" style="width:0%"></div></div>
-        </div>
-        <div class="progress-wrap">
-          <div class="progress-meta"><span class="progress-name">Court Procedures</span><span class="progress-value" id="val-court">0%</span></div>
-          <div class="bar-track"><div class="bar-fill" id="bar-court" style="width:0%"></div></div>
-        </div>
-        <div class="progress-wrap">
-          <div class="progress-meta"><span class="progress-name">Prosecutorial Standards</span><span class="progress-value" id="val-pros">0%</span></div>
-          <div class="bar-track"><div class="bar-fill" id="bar-pros" style="width:0%"></div></div>
-        </div>
-        <div class="progress-wrap">
-          <div class="progress-meta"><span class="progress-name">Giglio / Credibility Rules</span><span class="progress-value" id="val-gig">0%</span></div>
-          <div class="bar-track"><div class="bar-fill" id="bar-gig" style="width:0%"></div></div>
-        </div>
-        <div style="display:flex; flex-wrap:wrap; margin-top:10px;">
-          <span class="tag gold">HSI</span>
-          <span class="tag gold">ATF</span>
-          <span class="tag gold">Transnational Crime</span>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title"><span class="dot"></span> Application Checklist</div>
-        <ul class="checklist" id="career-checklist">
-          <li data-id="c1"><div class="check-box"></div><span>Update federal resume (USAJobs format)</span></li>
-          <li data-id="c2"><div class="check-box"></div><span>Request letters of recommendation</span></li>
-          <li data-id="c3"><div class="check-box"></div><span>Research current 1811 openings</span></li>
-          <li data-id="c4"><div class="check-box"></div><span>Submit first application (HSI or ATF)</span></li>
-          <li data-id="c5"><div class="check-box"></div><span>Review Giglio case law</span></li>
-          <li data-id="c6"><div class="check-box"></div><span>Network with current 1811 agents</span></li>
-          <li data-id="c7"><div class="check-box"></div><span>Complete structured interview prep</span></li>
-        </ul>
-      </div>
-
-    </div>
-
-    <div style="margin-top:16px;">
-      <div class="card">
-        <div class="card-title"><span class="dot"></span> Study Log &amp; Notes</div>
-        <textarea class="notes-input" id="career-notes" placeholder="What did you study today? Cases reviewed, key concepts, insights..."></textarea>
-      </div>
-    </div>
-  </div>
-
-  <hr class="divider">
-
-  <!-- LANE 2: FITNESS -->
-  <div class="section">
-    <div class="section-label">Lane 02 — Body Transformation · 90-Day Cut</div>
-    <div class="grid-3">
-
-      <div class="card">
-        <div class="card-title"><span class="dot green"></span> Weight</div>
-        <div class="stat-box">
-          <div class="stat-box-label">Starting Weight</div>
-          <div class="stat-box-value">257 <span style="font-size:1rem;color:var(--muted)">lbs</span></div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-box-label">Current Weight</div>
-          <input type="number" class="num-input" id="current-weight" placeholder="---" style="width:100%; text-align:left; background:var(--subtle); border:1px solid var(--border); padding:8px 12px; border-radius:6px;">
-          <div class="stat-box-sub">Goal: 212 lbs (–45 lbs)</div>
-        </div>
-        <div class="progress-wrap" style="margin-top:8px;">
-          <div class="progress-meta"><span class="progress-name">Fat Loss Progress</span><span class="progress-value" id="val-weight">0%</span></div>
-          <div class="bar-track"><div class="bar-fill green" id="bar-weight" style="width:0%"></div></div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title"><span class="dot green"></span> Daily Targets</div>
-        <ul class="checklist" id="fitness-checklist">
-          <li data-id="f1"><div class="check-box"></div><span>200g+ protein hit today</span></li>
-          <li data-id="f2"><div class="check-box"></div><span>Calorie deficit maintained</span></li>
-          <li data-id="f3"><div class="check-box"></div><span>Strength training session done</span></li>
-          <li data-id="f4"><div class="check-box"></div><span>Cardio session done</span></li>
-          <li data-id="f5"><div class="check-box"></div><span>8h sleep target</span></li>
-          <li data-id="f6"><div class="check-box"></div><span>Supplements taken</span></li>
-        </ul>
-      </div>
-
-      <div class="card">
-        <div class="card-title"><span class="dot green"></span> Performance Goals</div>
-        <div class="progress-wrap">
-          <div class="progress-meta"><span class="progress-name">Marathon Readiness</span><span class="progress-value" id="val-marathon">0%</span></div>
-          <div class="bar-track"><div class="bar-fill green" id="bar-marathon" style="width:0%"></div></div>
-        </div>
-        <div class="progress-wrap">
-          <div class="progress-meta"><span class="progress-name">Push-ups (goal: 70/min)</span><span class="progress-value" id="val-pushup">0</span></div>
-          <div class="bar-track"><div class="bar-fill green" id="bar-pushup" style="width:0%"></div></div>
-        </div>
-        <div class="number-input-row">
-          <span class="num-label">Best push-ups / min today</span>
-          <input type="number" class="num-input" id="pushup-count" placeholder="0" min="0" max="100">
-        </div>
-        <div class="number-input-row">
-          <span class="num-label">Longest run this week (mi)</span>
-          <input type="number" class="num-input" id="run-miles" placeholder="0" min="0" max="26" step="0.1">
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <hr class="divider">
-
-  <!-- LANE 3: MUSIC -->
-  <div class="section">
-    <div class="section-label">Lane 03 — Music Business · Studio Growth</div>
-    <div class="grid-2">
-
-      <div class="card">
-        <div class="card-title"><span class="dot blue"></span> Revenue Tracker</div>
-        <div class="stat-box">
-          <div class="stat-box-label">Monthly Revenue Goal</div>
-          <div class="stat-box-value gold">$1,000</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-box-label">Revenue This Month</div>
-          <div style="display:flex; align-items:center; gap:10px;">
-            <span style="color:var(--muted); font-family:'DM Mono',monospace;">$</span>
-            <input type="number" class="num-input" id="music-revenue" placeholder="0" style="width:120px;" min="0">
-          </div>
-        </div>
-        <div class="progress-wrap" style="margin-top:10px;">
-          <div class="progress-meta"><span class="progress-name">Toward $1k/month</span><span class="progress-value" id="val-rev">0%</span></div>
-          <div class="bar-track"><div class="bar-fill blue" id="bar-rev" style="width:0%"></div></div>
-        </div>
-        <div style="margin-top: 12px;">
-          <span class="tag blue">Beats</span>
-          <span class="tag blue">Mix/Master</span>
-          <span class="tag blue">Recording</span>
-          <span class="tag blue">Sync Licensing</span>
-          <span class="tag blue">Artist Mgmt</span>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title"><span class="dot blue"></span> Artist Development</div>
-        <div class="stat-box">
-          <div class="stat-box-label">Signed Clients</div>
-          <div class="stat-box-value blue">1 <span style="font-size:0.9rem; color:var(--muted)">($300 package)</span></div>
-          <div class="stat-box-sub">Target: Latin Urban · R&B · Local Indie</div>
-        </div>
-        <ul class="checklist" id="music-checklist">
-          <li data-id="m1"><div class="check-box"></div><span>Deliver on current artist's package</span></li>
-          <li data-id="m2"><div class="check-box"></div><span>Complete a release strategy for client</span></li>
-          <li data-id="m3"><div class="check-box"></div><span>Outreach to 1 new potential client</span></li>
-          <li data-id="m4"><div class="check-box"></div><span>Upload 1 new beat to catalog</span></li>
-          <li data-id="m5"><div class="check-box"></div><span>Research sync licensing opportunities</span></li>
-          <li data-id="m6"><div class="check-box"></div><span>Post studio content on social media</span></li>
-        </ul>
-      </div>
-
-    </div>
-  </div>
-
-  <hr class="divider">
-
-  <!-- FINANCE -->
-  <div class="section">
-    <div class="section-label">Finance — Debt Elimination</div>
-    <div class="grid-3">
-
-      <div class="card">
-        <div class="card-title"><span class="dot"></span> Student Loans</div>
-        <div class="stat-box">
-          <div class="stat-box-label">Starting Balance</div>
-          <div class="stat-box-value">$16,000</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-box-label">Remaining</div>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <span style="color:var(--muted);font-family:'DM Mono',monospace;">$</span>
-            <input type="number" class="num-input" id="loan-bal" placeholder="16000" style="width:100px;" min="0" max="16000">
-          </div>
-        </div>
-        <div class="progress-wrap" style="margin-top:10px;">
-          <div class="progress-meta"><span class="progress-name">Paid Off</span><span class="progress-value" id="val-loan">0%</span></div>
-          <div class="bar-track"><div class="bar-fill" id="bar-loan" style="width:0%"></div></div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title"><span class="dot"></span> Wife's CC Debt</div>
-        <div class="stat-box">
-          <div class="stat-box-label">Starting Balance</div>
-          <div class="stat-box-value">$24,000</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-box-label">Remaining</div>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <span style="color:var(--muted);font-family:'DM Mono',monospace;">$</span>
-            <input type="number" class="num-input" id="cc-bal" placeholder="24000" style="width:100px;" min="0" max="24000">
-          </div>
-        </div>
-        <div class="progress-wrap" style="margin-top:10px;">
-          <div class="progress-meta"><span class="progress-name">Paid Off</span><span class="progress-value" id="val-cc">0%</span></div>
-          <div class="bar-track"><div class="bar-fill" id="bar-cc" style="width:0%"></div></div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title"><span class="dot"></span> Total Debt Overview</div>
-        <div class="stat-box">
-          <div class="stat-box-label">Total Starting Debt</div>
-          <div class="stat-box-value">$32,000</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-box-label">Credit Score</div>
-          <div class="stat-box-value gold" id="credit-score-display">650</div>
-          <div class="stat-box-sub">Update as it changes</div>
-        </div>
-        <div class="number-input-row" style="margin-top:8px;">
-          <span class="num-label">Current credit score</span>
-          <input type="number" class="num-input" id="credit-score" placeholder="650" min="300" max="850">
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <hr class="divider">
-
-  <!-- FAMILY / RELOCATION -->
-  <div class="section">
-    <div class="section-label">Family · Relocation Planning</div>
-    <div class="grid-2">
-
-      <div class="card">
-        <div class="card-title"><span class="dot"></span> Family Priorities</div>
-        <ul class="checklist" id="family-checklist">
-          <li data-id="fam1"><div class="check-box"></div><span>Son's childcare arrangement confirmed</span></li>
-          <li data-id="fam2"><div class="check-box"></div><span>Support wife through postpartum this week</span></li>
-          <li data-id="fam3"><div class="check-box"></div><span>Quality 1-on-1 time with son today</span></li>
-          <li data-id="fam4"><div class="check-box"></div><span>Family dinner / intentional connection</span></li>
-          <li data-id="fam5"><div class="check-box"></div><span>Rest properly (not just for fitness)</span></li>
-        </ul>
-      </div>
-
-      <div class="card">
-        <div class="card-title"><span class="dot"></span> Relocation (~18 months)</div>
-        <div class="progress-wrap">
-          <div class="progress-meta"><span class="progress-name">Relocation Readiness</span><span class="progress-value" id="val-reloc">0%</span></div>
-          <div class="bar-track"><div class="bar-fill multi" id="bar-reloc" style="width:0%"></div></div>
-        </div>
-        <ul class="checklist" id="reloc-checklist">
-          <li data-id="r1"><div class="check-box"></div><span>Research Miami COL vs salary for 1811</span></li>
-          <li data-id="r2"><div class="check-box"></div><span>Research NYC / Charlotte options</span></li>
-          <li data-id="r3"><div class="check-box"></div><span>Start relocation savings fund</span></li>
-          <li data-id="r4"><div class="check-box"></div><span>Align relocation with 1811 placement</span></li>
-          <li data-id="r5"><div class="check-box"></div><span>Research school districts / neighborhoods</span></li>
-        </ul>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- SAVE -->
-  <button class="save-btn" onclick="saveAll()">SAVE PROGRESS</button>
-  <div class="save-msg" id="save-msg">Progress saved ✓</div>
-
+<div class="mission">
+  <strong>Core Mission</strong>
+  Becoming a stronger man for your family while building long-term stability — as a father, a federal investigator, a disciplined man, and a music creator.
 </div>
 
+<!-- RINGS -->
+<div class="section">
+  <div class="sl"><span>Weekly Score</span></div>
+  <div class="card">
+    <div class="rings-row">
+      <div class="ring-wrap">
+        <div class="ring-container">
+          <svg class="ring-svg" width="100" height="100" viewBox="0 0 100 100"><circle class="ring-bg" cx="50" cy="50" r="42"/><circle class="ring-fill" id="ring-career" cx="50" cy="50" r="42" style="stroke:var(--gold)"/></svg>
+          <div class="ring-inner"><span class="rpct" id="rpct-career">0%</span><span class="rsub">career</span></div>
+        </div><span class="rname">1811 Path</span>
+      </div>
+      <div class="ring-wrap">
+        <div class="ring-container">
+          <svg class="ring-svg" width="100" height="100" viewBox="0 0 100 100"><circle class="ring-bg" cx="50" cy="50" r="42"/><circle class="ring-fill" id="ring-fitness" cx="50" cy="50" r="42" style="stroke:var(--green)"/></svg>
+          <div class="ring-inner"><span class="rpct" id="rpct-fitness">0%</span><span class="rsub">fitness</span></div>
+        </div><span class="rname">Body Transformation</span>
+      </div>
+      <div class="ring-wrap">
+        <div class="ring-container">
+          <svg class="ring-svg" width="100" height="100" viewBox="0 0 100 100"><circle class="ring-bg" cx="50" cy="50" r="42"/><circle class="ring-fill" id="ring-music" cx="50" cy="50" r="42" style="stroke:var(--blue)"/></svg>
+          <div class="ring-inner"><span class="rpct" id="rpct-music">0%</span><span class="rsub">music</span></div>
+        </div><span class="rname">Studio Growth</span>
+      </div>
+      <div class="ring-wrap">
+        <div class="ring-container">
+          <svg class="ring-svg" width="100" height="100" viewBox="0 0 100 100"><circle class="ring-bg" cx="50" cy="50" r="42"/><circle class="ring-fill" id="ring-finance" cx="50" cy="50" r="42" style="stroke:var(--gold)"/></svg>
+          <div class="ring-inner"><span class="rpct" id="rpct-finance">0%</span><span class="rsub">debt</span></div>
+        </div><span class="rname">Debt Elimination</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr/>
+
+<!-- CAREER -->
+<div class="section">
+  <div class="sl"><span>Lane 01 — Career · 1811 Path</span></div>
+  <div class="g2">
+    <div class="card">
+      <div class="ct"><div class="dot"></div> Training Progress</div>
+      <div class="bw"><div class="bm"><span class="bl">NW3C — Intro to Investigations</span><span class="bp" id="bp-nw3c">0%</span></div><div class="bt click" data-bar="nw3c"><div class="bf" id="bf-nw3c" style="width:0%"></div></div></div>
+      <div class="bw"><div class="bm"><span class="bl">FEMA IS Courses (IS-100/200/700/800)</span><span class="bp" id="bp-fema">0%</span></div><div class="bt click" data-bar="fema"><div class="bf" id="bf-fema" style="width:0%"></div></div></div>
+      <div class="bw"><div class="bm"><span class="bl">ACAMS Certification</span><span class="bp" id="bp-acams">0%</span></div><div class="bt click" data-bar="acams"><div class="bf" id="bf-acams" style="width:0%"></div></div></div>
+      <div class="bw"><div class="bm"><span class="bl">Task Force Assignment</span><span class="bp" id="bp-taskforce">0%</span></div><div class="bt click" data-bar="taskforce"><div class="bf" id="bf-taskforce" style="width:0%"></div></div></div>
+      <div style="margin-top:10px">
+        <span class="tag gold">HSI</span><span class="tag gold">ATF</span>
+        <span class="tag gold">Transnational Crime</span><span class="tag gold">Financial Crimes</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct"><div class="dot"></div> Application & Pipeline</div>
+      <ul class="cl" id="career-cl">
+        <li data-id="c1"><div class="cb"></div><span>Check application status on USAJobs weekly</span></li>
+        <li data-id="c2"><div class="cb"></div><span>Follow up with HSI point of contact</span></li>
+        <li data-id="c3"><div class="cb"></div><span>Begin SF-86 prep (residences, references, history)</span></li>
+        <li data-id="c4"><div class="cb"></div><span>Practice structured interview questions out loud</span></li>
+        <li data-id="c5"><div class="cb"></div><span>Network with at least 1 active 1811 agent</span></li>
+        <li data-id="c6"><div class="cb"></div><span>Research ATF/HSI field offices in Miami, Orlando, Tampa</span></li>
+        <li data-id="c7"><div class="cb"></div><span>Finish NW3C Intro to Investigations</span></li>
+        <li data-id="c8"><div class="cb"></div><span>Complete FEMA IS-100, IS-200, IS-700, IS-800</span></li>
+        <li data-id="c9"><div class="cb"></div><span>Pursue task force assignment through current agency</span></li>
+        <li data-id="c10"><div class="cb"></div><span>Save toward ACAMS Certification (~$1,200–$1,500)</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Interview Practice -->
+  <div style="margin-top:16px">
+    <div class="card">
+      <div class="ct"><div class="dot orange"></div> Weekly Interview Practice</div>
+      <div class="week-badge" id="week-badge">Week 1</div>
+      <div id="interview-questions"></div>
+    </div>
+  </div>
+
+  <!-- Disciplinary -->
+  <div style="margin-top:16px">
+    <div class="disc-card">
+      <div class="ct"><div class="dot red"></div> Disciplinary Action — Background Prep</div>
+      <p style="font-size:0.8rem;color:var(--muted);margin-bottom:14px;line-height:1.5">Work through these over time. Honesty and preparation are your strongest tools.</p>
+      <ul class="cl" id="disc-cl">
+        <li data-id="d1"><div class="cb"></div><span>Pull official disciplinary record documentation</span></li>
+        <li data-id="d2"><div class="cb"></div><span>Write out honest narrative — what happened, what changed</span></li>
+        <li data-id="d3"><div class="cb"></div><span>Collect commendations & positive reviews since incident</span></li>
+        <li data-id="d4"><div class="cb"></div><span>Consult a federal clearance attorney (one-time ~$200–$400)</span></li>
+        <li data-id="d5"><div class="cb"></div><span>Research insubordination adjudication under federal guidelines</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div style="margin-top:16px">
+    <div class="card">
+      <div class="ct"><div class="dot"></div> Study Log & Notes</div>
+      <textarea id="career-notes" placeholder="What did you study today? Cases reviewed, key concepts, insights..."></textarea>
+    </div>
+  </div>
+</div>
+
+<hr/>
+
+<!-- FITNESS -->
+<div class="section">
+  <div class="sl"><span>Lane 02 — Body Transformation · 90-Day Cut</span></div>
+
+  <div class="g3" style="margin-bottom:16px">
+    <!-- Weight -->
+    <div class="card">
+      <div class="ct"><div class="dot green"></div> Weight</div>
+      <div class="sb"><div class="sl2">Starting</div><div class="sv">257 lbs</div></div>
+      <div class="sb"><div class="sl2">Goal</div><div class="sv">212 lbs</div><div class="ss">–45 lbs</div></div>
+      <label class="fl" style="margin-top:8px">Current Weight (lbs)</label>
+      <input type="number" id="current-weight" placeholder="257" min="150" max="350"/>
+      <div class="bw" style="margin-top:10px">
+        <div class="bm"><span class="bl">Fat Loss Progress</span><span class="bp" id="bp-weight">0%</span></div>
+        <div class="bt"><div class="bf green" id="bf-weight" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <!-- Body Composition -->
+    <div class="card">
+      <div class="ct"><div class="dot green"></div> Body Composition</div>
+      <div class="sb"><div class="sl2">Goal Body Fat %</div><div class="sv green">15%</div><div class="ss">Track weekly</div></div>
+      <label class="fl">Current Body Fat %</label>
+      <input type="number" id="bf-pct" placeholder="e.g. 28" min="5" max="60" step="0.1"/>
+      <div class="bw" style="margin-top:10px">
+        <div class="bm"><span class="bl">BF% Progress (goal: 15%)</span><span class="bp" id="bp-bfpct">0%</span></div>
+        <div class="bt"><div class="bf green" id="bf-bfpct-bar" style="width:0%"></div></div>
+      </div>
+      <label class="fl" style="margin-top:10px">Fat Free Mass (lbs)</label>
+      <input type="number" id="ffm" placeholder="auto-calculated" min="100" max="300" step="0.1"/>
+      <div class="ss" style="margin-top:6px" id="ffm-note">Enter weight + BF% to auto-calculate</div>
+    </div>
+
+    <!-- Movement & Hydration -->
+    <div class="card">
+      <div class="ct"><div class="dot green"></div> Movement & Hydration</div>
+      <div class="bw">
+        <div class="bm"><span class="bl">Steps Today (goal: 8,000)</span><span class="bp" id="bp-steps">0</span></div>
+        <div class="bt"><div class="bf green" id="bf-steps" style="width:0%"></div></div>
+      </div>
+      <input type="number" id="steps-count" placeholder="0" min="0" max="30000" style="margin-bottom:14px"/>
+      <div class="bw">
+        <div class="bm"><span class="bl">Water (goal: 8 glasses)</span><span class="bp" id="bp-water">0 / 8</span></div>
+        <div class="bt"><div class="bf blue" id="bf-water" style="width:0%"></div></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px" id="water-btns"></div>
+    </div>
+  </div>
+
+  <!-- Daily checklist + pushups -->
+  <div class="g2" style="margin-bottom:16px">
+    <div class="card">
+      <div class="ct"><div class="dot green"></div> Daily Targets</div>
+      <ul class="cl" id="fitness-cl">
+        <li data-id="f1"><div class="cb"></div><span>200g+ protein hit today</span></li>
+        <li data-id="f2"><div class="cb"></div><span>Calorie deficit maintained</span></li>
+        <li data-id="f3"><div class="cb"></div><span>Strength training session done</span></li>
+        <li data-id="f4"><div class="cb"></div><span>20–30 min cardio completed</span></li>
+        <li data-id="f5"><div class="cb"></div><span>8,000 steps hit today</span></li>
+        <li data-id="f6"><div class="cb"></div><span>8 glasses of water hit today</span></li>
+        <li data-id="f7"><div class="cb"></div><span>8h sleep target</span></li>
+        <li data-id="f8"><div class="cb"></div><span>Supplements taken</span></li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="ct"><div class="dot green"></div> Push-up Goal</div>
+      <div class="sb"><div class="sl2">Goal</div><div class="sv">70 / min</div></div>
+      <div class="bw">
+        <div class="bm"><span class="bl">Push-ups / min</span><span class="bp" id="bp-pushup">0</span></div>
+        <div class="bt"><div class="bf green" id="bf-pushup" style="width:0%"></div></div>
+      </div>
+      <label class="fl">Best push-ups / min today</label>
+      <input type="number" id="pushup-count" placeholder="0" min="0" max="100"/>
+    </div>
+  </div>
+
+  <!-- PRs -->
+  <div class="card">
+    <div class="ct"><div class="dot green"></div> Personal Records (PRs)</div>
+    <div class="pr-grid">
+      <div class="pr-box"><div class="pr-label">Chest Press</div><div class="pr-val" id="prd-chest">— lbs</div><input type="number" id="pr-chest" placeholder="lbs" min="0" max="999"/></div>
+      <div class="pr-box"><div class="pr-label">Shoulder Press</div><div class="pr-val" id="prd-shoulder">— lbs</div><input type="number" id="pr-shoulder" placeholder="lbs" min="0" max="999"/></div>
+      <div class="pr-box"><div class="pr-label">Squat</div><div class="pr-val" id="prd-squat">— lbs</div><input type="number" id="pr-squat" placeholder="lbs" min="0" max="999"/></div>
+      <div class="pr-box"><div class="pr-label">Deadlift</div><div class="pr-val" id="prd-deadlift">— lbs</div><input type="number" id="pr-deadlift" placeholder="lbs" min="0" max="999"/></div>
+      <div class="pr-box"><div class="pr-label">Stairmaster Speed</div><div class="pr-val" id="prd-stair-speed">— lvl</div><input type="number" id="pr-stair-speed" placeholder="level" min="0" max="20" step="0.5"/></div>
+      <div class="pr-box"><div class="pr-label">Stairmaster Time</div><div class="pr-val" id="prd-stair-time">— min</div><input type="number" id="pr-stair-time" placeholder="mins" min="0" max="120"/></div>
+    </div>
+  </div>
+</div>
+
+<hr/>
+
+<!-- MUSIC -->
+<div class="section">
+  <div class="sl"><span>Lane 03 — Music Business · Studio Growth</span></div>
+  <div class="g2">
+    <div class="card">
+      <div class="ct"><div class="dot blue"></div> Revenue Tracker</div>
+      <div class="sb"><div class="sl2">Monthly Revenue Goal</div><div class="sv gold">$1,000</div></div>
+      <label class="fl">Revenue This Month ($)</label>
+      <input type="number" id="music-revenue" placeholder="0" min="0"/>
+      <div class="bw" style="margin-top:12px">
+        <div class="bm"><span class="bl">Toward $1k / month</span><span class="bp" id="bp-rev">0%</span></div>
+        <div class="bt"><div class="bf blue" id="bf-rev" style="width:0%"></div></div>
+      </div>
+      <div style="margin-top:10px">
+        <span class="tag blue">Beats</span><span class="tag blue">Mix/Master</span>
+        <span class="tag blue">Recording</span><span class="tag blue">Sync Licensing</span><span class="tag blue">Artist Mgmt</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct"><div class="dot blue"></div> Artist Development</div>
+      <div class="sb"><div class="sl2">Signed Clients</div><div class="sv blue">1 <span style="font-size:0.9rem;color:var(--muted)">($300 package)</span></div><div class="ss">Target: Latin Urban · R&B · Local Indie</div></div>
+      <ul class="cl" id="music-cl">
+        <li data-id="m1"><div class="cb"></div><span>Deliver on current artist's package</span></li>
+        <li data-id="m2"><div class="cb"></div><span>Complete a release strategy for client</span></li>
+        <li data-id="m3"><div class="cb"></div><span>Outreach to 1 new potential client</span></li>
+        <li data-id="m4"><div class="cb"></div><span>Upload 1 new beat to catalog</span></li>
+        <li data-id="m5"><div class="cb"></div><span>Research sync licensing opportunities</span></li>
+        <li data-id="m6"><div class="cb"></div><span>Post studio content on social media</span></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<hr/>
+
+<!-- FINANCE -->
+<div class="section">
+  <div class="sl"><span>Finance — Debt Elimination</span></div>
+  <div class="card" style="margin-bottom:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;margin-bottom:16px">
+      <div><div class="sl2">Total Remaining Debt</div><div class="sv" style="font-size:2rem">$<span id="total-debt-display">42,608</span></div></div>
+      <div style="text-align:right"><div class="sl2">Total Paid Off</div><div class="sv gold" style="font-size:2rem">$<span id="total-paid-display">0</span></div></div>
+      <div style="text-align:right"><div class="sl2">Credit Score</div><div class="sv gold" style="font-size:2rem" id="credit-score-display">650</div></div>
+    </div>
+    <div class="bw" style="margin-bottom:0">
+      <div class="bm"><span class="bl">Overall Debt Eliminated</span><span class="bp" id="bp-total-debt">0%</span></div>
+      <div class="bt" style="height:10px"><div class="bf green" id="bf-total-debt" style="width:0%;height:100%"></div></div>
+    </div>
+  </div>
+
+  <div class="sl" style="margin-top:20px"><span>Personal Accounts</span></div>
+  <div class="g3">
+    <div class="card"><div class="ct"><div class="dot red"></div> Capital One</div><div class="sb"><div class="sl2">Starting</div><div class="sv">$6,423</div><div class="ss">Min: $181 · Due: 28th</div></div><label class="fl">Current Balance ($)</label><input type="number" id="bal-cap1" placeholder="6423" min="0" max="6423"/><div class="bw" style="margin-top:10px;margin-bottom:0"><div class="bm"><span class="bl">Paid Off</span><span class="bp" id="bp-cap1">0%</span></div><div class="bt"><div class="bf green" id="bf-cap1" style="width:0%"></div></div></div></div>
+    <div class="card"><div class="ct"><div class="dot green"></div> Express</div><div class="sb"><div class="sl2">Balance</div><div class="sv green">$0</div><div class="ss">Min: $37 · Due: 28th</div></div><div class="sb" style="background:rgba(34,197,94,0.06);border-color:rgba(34,197,94,0.2)"><div class="sl2" style="color:var(--green)">✓ Paid Off</div><div class="sv green">CLEAR</div></div><div class="bw" style="margin-bottom:0"><div class="bm"><span class="bl">Paid Off</span><span class="bp">100%</span></div><div class="bt"><div class="bf green" style="width:100%"></div></div></div></div>
+    <div class="card"><div class="ct"><div class="dot red"></div> Best Buy</div><div class="sb"><div class="sl2">Starting</div><div class="sv">$1,999</div><div class="ss">Min: $291 · Due: 18th</div></div><label class="fl">Current Balance ($)</label><input type="number" id="bal-bestbuy" placeholder="1999" min="0" max="1999"/><div class="bw" style="margin-top:10px;margin-bottom:0"><div class="bm"><span class="bl">Paid Off</span><span class="bp" id="bp-bestbuy">0%</span></div><div class="bt"><div class="bf green" id="bf-bestbuy" style="width:0%"></div></div></div></div>
+    <div class="card"><div class="ct"><div class="dot green"></div> Macy's</div><div class="sb"><div class="sl2">Balance</div><div class="sv green">$0</div><div class="ss">Min: $50 · Due: 13th</div></div><div class="sb" style="background:rgba(34,197,94,0.06);border-color:rgba(34,197,94,0.2)"><div class="sl2" style="color:var(--green)">✓ Paid Off</div><div class="sv green">CLEAR</div></div><div class="bw" style="margin-bottom:0"><div class="bm"><span class="bl">Paid Off</span><span class="bp">100%</span></div><div class="bt"><div class="bf green" style="width:100%"></div></div></div></div>
+    <div class="card"><div class="ct"><div class="dot red"></div> Chase (Personal)</div><div class="sb"><div class="sl2">Starting</div><div class="sv">$18,600</div><div class="ss">Min: $535 · Due: 2nd</div></div><label class="fl">Current Balance ($)</label><input type="number" id="bal-chase" placeholder="18600" min="0" max="18600"/><div class="bw" style="margin-top:10px;margin-bottom:0"><div class="bm"><span class="bl">Paid Off</span><span class="bp" id="bp-chase">0%</span></div><div class="bt"><div class="bf green" id="bf-chase" style="width:0%"></div></div></div></div>
+    <div class="card"><div class="ct"><div class="dot red"></div> Citi</div><div class="sb"><div class="sl2">Starting</div><div class="sv">$4,586</div><div class="ss">Min: $45 · Due: 27th</div></div><label class="fl">Current Balance ($)</label><input type="number" id="bal-citi" placeholder="4586" min="0" max="4586"/><div class="bw" style="margin-top:10px;margin-bottom:0"><div class="bm"><span class="bl">Paid Off</span><span class="bp" id="bp-citi">0%</span></div><div class="bt"><div class="bf green" id="bf-citi" style="width:0%"></div></div></div></div>
+  </div>
+
+  <div class="sl" style="margin-top:24px"><span>Business Account</span></div>
+  <div style="max-width:380px">
+    <div class="card"><div class="ct"><div class="dot blue"></div> Chase Business</div><div class="sb"><div class="sl2">Starting</div><div class="sv">$11,000</div><div class="ss">Min: $373 · Due: 5th</div></div><label class="fl">Current Balance ($)</label><input type="number" id="bal-biz" placeholder="11000" min="0" max="11000"/><div class="bw" style="margin-top:10px;margin-bottom:0"><div class="bm"><span class="bl">Paid Off</span><span class="bp" id="bp-biz">0%</span></div><div class="bt"><div class="bf blue" id="bf-biz" style="width:0%"></div></div></div></div>
+  </div>
+
+  <div style="margin-top:20px;max-width:380px">
+    <div class="card"><div class="ct"><div class="dot"></div> Credit Score</div><label class="fl">Current Score</label><input type="number" id="credit-score" placeholder="650" min="300" max="850"/></div>
+  </div>
+</div>
+
+<hr/>
+
+<!-- FAMILY -->
+<div class="section">
+  <div class="sl"><span>Family · Milestones & Priorities</span></div>
+  <div class="g2">
+    <div class="card">
+      <div class="ct"><div class="dot"></div> Daily Priorities</div>
+      <ul class="cl" id="family-cl">
+        <li data-id="fam1"><div class="cb"></div><span>Quality 1-on-1 time with Adrian today</span></li>
+        <li data-id="fam2"><div class="cb"></div><span>Support wife through postpartum this week</span></li>
+        <li data-id="fam3"><div class="cb"></div><span>Family dinner / intentional connection</span></li>
+        <li data-id="fam4"><div class="cb"></div><span>Rest properly (not just for fitness)</span></li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="ct"><div class="dot gold"></div> Adrian's Milestones</div>
+      <ul class="cl" id="milestones-cl">
+        <li data-id="ms1"><div class="cb"></div><span>Adrian's First Haircut 💈</span></li>
+        <li data-id="ms2"><div class="cb"></div><span>Adrian's Photoshoot 📸</span></li>
+        <li data-id="ms3"><div class="cb"></div><span>Part-time care arrangement locked in 🔒</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="sl" style="margin-top:24px"><span>Relocation Planning · ~18 Months</span></div>
+  <div class="g2">
+    <div class="card">
+      <div class="ct"><div class="dot"></div> Relocation Checklist</div>
+      <ul class="cl" id="reloc-cl">
+        <li data-id="r1"><div class="cb"></div><span>Research Miami COL vs 1811 salary + locality pay</span></li>
+        <li data-id="r2"><div class="cb"></div><span>Research Orlando COL vs 1811 salary + locality pay</span></li>
+        <li data-id="r3"><div class="cb"></div><span>Research Tampa COL vs 1811 salary + locality pay</span></li>
+        <li data-id="r4"><div class="cb"></div><span>Compare HIDTA designations across all 3 cities</span></li>
+        <li data-id="r5"><div class="cb"></div><span>Align relocation city with 1811 placement offer</span></li>
+        <li data-id="r6"><div class="cb"></div><span>Research relocation incentives on USAJobs postings</span></li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="ct"><div class="dot green"></div> Relocation Savings</div>
+      <div class="sb"><div class="sl2">Savings Goal</div><div class="sv green">$10,000</div><div class="ss">Target before move</div></div>
+      <label class="fl">Current Relocation Savings ($)</label>
+      <input type="number" id="reloc-savings" placeholder="0" min="0" max="50000"/>
+      <div class="bw" style="margin-top:12px;margin-bottom:0">
+        <div class="bm"><span class="bl">Toward $10k goal</span><span class="bp" id="bp-reloc-savings">0%</span></div>
+        <div class="bt"><div class="bf green" id="bf-reloc-savings" style="width:0%"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<button class="save-btn" onclick="saveAll()">SAVE PROGRESS</button>
+<div class="save-msg" id="save-msg">Progress saved ✓</div>
+
+</div>
 <script>
-// ── Utilities ─────────────────────────────────────────────────────────────────
-
-function setBar(barId, valId, pct) {
-  pct = Math.min(100, Math.max(0, pct));
-  const bar = document.getElementById(barId);
-  const val = document.getElementById(valId);
-  if (bar) bar.style.width = pct + '%';
-  if (val) val.textContent = Math.round(pct) + '%';
-}
-
-function setRing(ringId, pctId, pct) {
-  pct = Math.min(100, Math.max(0, pct));
-  const circ = 263.9;
-  const offset = circ - (circ * pct / 100);
-  const ring = document.getElementById(ringId);
-  const label = document.getElementById(pctId);
-  if (ring) ring.style.strokeDashoffset = offset;
-  if (label) label.textContent = Math.round(pct) + '%';
-}
-
-// ── Date ──────────────────────────────────────────────────────────────────────
-function updateDate() {
-  const d = new Date();
-  const opts = { month: 'short', day: 'numeric', year: 'numeric' };
-  document.getElementById('today-date').textContent = d.toLocaleDateString('en-US', opts);
-}
-updateDate();
-
-// ── Sliders for study bars ─────────────────────────────────────────────────────
-const studyBars = [
-  { bar: 'bar-invest', val: 'val-invest', key: 'study-invest' },
-  { bar: 'bar-court',  val: 'val-court',  key: 'study-court' },
-  { bar: 'bar-pros',   val: 'val-pros',   key: 'study-pros' },
-  { bar: 'bar-gig',    val: 'val-gig',    key: 'study-gig' },
+// ── Interview Questions ────────────────────────────────────────────────────────
+const QUESTIONS=[
+  ["Describe a time you had to make a critical decision under pressure with limited information. What was the situation, what did you decide, and what was the outcome?","Tell me about a time you identified something unethical or improper happening around you. What did you do and why?"],
+  ["Describe a situation where you had to work closely with someone from another agency or department. How did you manage the relationship and what was the result?","Give me an example of a time you had to adapt quickly when a plan changed unexpectedly in the field. How did you handle it?"],
+  ["Tell me about the most complex report or documentation you've had to produce. What made it difficult and how did you ensure accuracy?","Describe a time you had to enforce a rule or policy that you personally disagreed with. How did you handle it?"],
+  ["Give me an example of a time you had to de-escalate a tense or potentially dangerous situation. What approach did you use?","Tell me about a time you made a mistake on the job. What happened, and what did you do to address it?"],
+  ["Describe a situation where you had to balance multiple competing priorities. How did you decide what came first?","Tell me about a time you had to gather information from someone who was uncooperative or evasive. What was your approach?"],
+  ["Give an example of a time you identified a pattern or problem that others had missed. How did you bring it to light?","Describe a time you had to deliver difficult news or feedback to a supervisor or colleague. How did you handle it?"],
+  ["Tell me about a time you had to maintain composure and professionalism during an extremely stressful or chaotic situation.","Describe a situation where you took initiative beyond your assigned duties. What drove you to act and what was the result?"],
+  ["Give me an example of a time you had to persuade others to follow a course of action they were initially resistant to.","Tell me about a time your integrity was tested on the job. What was the situation and how did you respond?"],
 ];
 
-// Make study bars clickable
-studyBars.forEach(s => {
-  const track = document.getElementById(s.bar)?.parentElement;
-  if (!track) return;
-  track.style.cursor = 'pointer';
-  track.addEventListener('click', (e) => {
-    const rect = track.getBoundingClientRect();
-    const pct = Math.round(((e.clientX - rect.left) / rect.width) * 100);
-    setBar(s.bar, s.val, pct);
-    computeCareerRing();
-    autoSave();
-  });
-});
-
-// Marathon bar also clickable
-['bar-marathon'].forEach(id => {
-  const el = document.getElementById(id);
-  if (!el) return;
-  const track = el.parentElement;
-  track.style.cursor = 'pointer';
-  track.addEventListener('click', (e) => {
-    const rect = track.getBoundingClientRect();
-    const pct = Math.round(((e.clientX - rect.left) / rect.width) * 100);
-    el.style.width = pct + '%';
-    document.getElementById('val-marathon').textContent = pct + '%';
-    computeFitnessRing();
-    autoSave();
-  });
-});
-
-// Reloc bar
-const relocTrack = document.getElementById('bar-reloc')?.parentElement;
-if (relocTrack) {
-  relocTrack.style.cursor = 'pointer';
-  relocTrack.addEventListener('click', (e) => {
-    const rect = relocTrack.getBoundingClientRect();
-    const pct = Math.round(((e.clientX - rect.left) / rect.width) * 100);
-    document.getElementById('bar-reloc').style.width = pct + '%';
-    document.getElementById('val-reloc').textContent = pct + '%';
-    autoSave();
-  });
+function getWeekNum(){
+  const anchor=new Date('2026-03-20');
+  const diff=Math.floor((new Date()-anchor)/(1000*60*60*24));
+  return Math.max(0,Math.floor(diff/7));
 }
+
+function renderIQ(){
+  const wi=getWeekNum()%QUESTIONS.length;
+  const wn=getWeekNum()+1;
+  const[q1,q2]=QUESTIONS[wi];
+  document.getElementById('week-badge').textContent=`Week ${wn}`;
+  document.getElementById('interview-questions').innerHTML=`
+    <div class="iq-card"><div class="iq-num">Question 1 of 2</div><div class="iq-q">"${q1}"</div><label class="fl">Your Answer (paste here for feedback)</label><textarea id="iq-ans-1" placeholder="Write your STAR-format answer here..."></textarea></div>
+    <div class="iq-card"><div class="iq-num">Question 2 of 2</div><div class="iq-q">"${q2}"</div><label class="fl">Your Answer (paste here for feedback)</label><textarea id="iq-ans-2" placeholder="Write your STAR-format answer here..."></textarea></div>`;
+  document.getElementById('iq-ans-1')?.addEventListener('input',autoSave);
+  document.getElementById('iq-ans-2')?.addEventListener('input',autoSave);
+}
+
+// ── Utilities ─────────────────────────────────────────────────────────────────
+function clamp(v,a,b){return Math.min(b,Math.max(a,v))}
+function setBar(fid,pid,pct){pct=clamp(pct,0,100);const f=document.getElementById(fid),p=document.getElementById(pid);if(f)f.style.width=pct+'%';if(p)p.textContent=Math.round(pct)+'%'}
+function setRing(rid,pid,pct){pct=clamp(pct,0,100);const r=document.getElementById(rid),l=document.getElementById(pid);if(r)r.style.strokeDashoffset=263.9-(263.9*pct/100);if(l)l.textContent=Math.round(pct)+'%'}
+function getBarPct(fid){const el=document.getElementById(fid);return el?parseFloat(el.style.width)||0:0}
+function clPct(id){const l=document.getElementById(id);if(!l)return 0;const a=l.querySelectorAll('li'),d=l.querySelectorAll('li.done');return a.length?(d.length/a.length)*100:0}
+
+document.getElementById('today-date').textContent=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+
+// ── Clickable bars ─────────────────────────────────────────────────────────────
+document.querySelectorAll('.bt.click').forEach(track=>{
+  track.addEventListener('click',e=>{
+    const rect=track.getBoundingClientRect();
+    const pct=Math.round(clamp(((e.clientX-rect.left)/rect.width)*100,0,100));
+    const k=track.dataset.bar;
+    const f=document.getElementById('bf-'+k),p=document.getElementById('bp-'+k);
+    if(f)f.style.width=pct+'%';if(p)p.textContent=pct+'%';
+    computeAllRings();autoSave();
+  });
+});
 
 // ── Checklists ─────────────────────────────────────────────────────────────────
-function initChecklists() {
-  document.querySelectorAll('.checklist li').forEach(li => {
-    li.addEventListener('click', () => {
-      li.classList.toggle('done');
-      computeAllRings();
-      autoSave();
-    });
-  });
+document.querySelectorAll('.cl li').forEach(li=>{
+  li.addEventListener('click',()=>{li.classList.toggle('done');computeAllRings();autoSave();});
+});
+
+// ── Inputs ────────────────────────────────────────────────────────────────────
+function ni(id,fn){document.getElementById(id)?.addEventListener('input',function(){fn(this.value);})}
+
+ni('current-weight',v=>{setBar('bf-weight','bp-weight',clamp(((257-parseFloat(v))/45)*100,0,100));autoCalcFFM();computeAllRings();autoSave();});
+ni('bf-pct',v=>{setBar('bf-bfpct-bar','bp-bfpct',clamp(((28-parseFloat(v))/13)*100,0,100));autoCalcFFM();computeAllRings();autoSave();});
+ni('ffm',()=>autoSave());
+document.getElementById('ffm')?.addEventListener('focus',function(){this._manual=true;});
+
+function autoCalcFFM(){
+  const w=parseFloat(document.getElementById('current-weight')?.value);
+  const bf=parseFloat(document.getElementById('bf-pct')?.value);
+  const inp=document.getElementById('ffm');
+  const note=document.getElementById('ffm-note');
+  if(w&&bf&&!isNaN(w)&&!isNaN(bf)&&inp&&!inp._manual){
+    const ffm=(w*(1-bf/100)).toFixed(1);
+    inp.value=ffm;
+    if(note)note.textContent=`Auto-calculated: ${ffm} lbs fat-free mass`;
+  }
 }
-initChecklists();
 
-// ── Number inputs ──────────────────────────────────────────────────────────────
-document.getElementById('current-weight')?.addEventListener('input', () => {
-  const cw = parseFloat(document.getElementById('current-weight').value) || 257;
-  const start = 257, goal = 212;
-  const pct = Math.max(0, Math.min(100, ((start - cw) / (start - goal)) * 100));
-  setBar('bar-weight', 'val-weight', pct);
-  computeFitnessRing();
-  autoSave();
+ni('steps-count',v=>{
+  const pct=clamp((parseFloat(v)/8000)*100,0,100);
+  const f=document.getElementById('bf-steps'),l=document.getElementById('bp-steps');
+  if(f)f.style.width=pct+'%';if(l)l.textContent=(parseFloat(v)||0).toLocaleString();
+  computeAllRings();autoSave();
 });
 
-document.getElementById('pushup-count')?.addEventListener('input', () => {
-  const v = parseFloat(document.getElementById('pushup-count').value) || 0;
-  const pct = (v / 70) * 100;
-  setBar('bar-pushup', 'val-pushup', pct);
-  document.getElementById('val-pushup').textContent = Math.round(v);
-  computeFitnessRing();
-  autoSave();
+ni('pushup-count',v=>{
+  setBar('bf-pushup','bp-pushup',clamp((parseFloat(v)/70)*100,0,100));
+  const d=document.getElementById('bp-pushup');if(d)d.textContent=Math.round(parseFloat(v)||0);
+  computeAllRings();autoSave();
 });
 
-document.getElementById('music-revenue')?.addEventListener('input', () => {
-  const v = parseFloat(document.getElementById('music-revenue').value) || 0;
-  const pct = (v / 1000) * 100;
-  setBar('bar-rev', 'val-rev', pct);
-  computeMusicRing();
-  autoSave();
+ni('music-revenue',v=>{setBar('bf-rev','bp-rev',clamp((parseFloat(v)/1000)*100,0,100));computeAllRings();autoSave();});
+ni('credit-score',v=>{const d=document.getElementById('credit-score-display');if(d&&v)d.textContent=v;autoSave();});
+ni('reloc-savings',v=>{setBar('bf-reloc-savings','bp-reloc-savings',clamp((parseFloat(v)/10000)*100,0,100));autoSave();});
+
+// ── PRs ───────────────────────────────────────────────────────────────────────
+const PR_KEYS=['chest','shoulder','squat','deadlift','stair-speed','stair-time'];
+const PR_UNITS={chest:'lbs',shoulder:'lbs',squat:'lbs',deadlift:'lbs','stair-speed':'lvl','stair-time':'min'};
+PR_KEYS.forEach(k=>{
+  ni('pr-'+k,v=>{
+    const d=document.getElementById('prd-'+k);
+    if(d)d.textContent=v?`${v} ${PR_UNITS[k]}`:`— ${PR_UNITS[k]}`;
+    autoSave();
+  });
 });
 
-document.getElementById('loan-bal')?.addEventListener('input', () => {
-  const v = parseFloat(document.getElementById('loan-bal').value) ?? 16000;
-  const pct = ((16000 - v) / 16000) * 100;
-  setBar('bar-loan', 'val-loan', pct);
-  computeFinanceRing();
-  autoSave();
-});
+// ── Debt ──────────────────────────────────────────────────────────────────────
+const DEBTS=[{id:'cap1',start:6423},{id:'bestbuy',start:1999},{id:'chase',start:18600},{id:'citi',start:4586},{id:'biz',start:11000}];
+const TOTAL_START=42608;
 
-document.getElementById('cc-bal')?.addEventListener('input', () => {
-  const v = parseFloat(document.getElementById('cc-bal').value) ?? 24000;
-  const pct = ((24000 - v) / 24000) * 100;
-  setBar('bar-cc', 'val-cc', pct);
-  computeFinanceRing();
-  autoSave();
-});
+function updDebt(id,start){const v=parseFloat(document.getElementById('bal-'+id)?.value);const cur=isNaN(v)?start:v;setBar('bf-'+id,'bp-'+id,clamp(((start-cur)/start)*100,0,100));}
 
-document.getElementById('credit-score')?.addEventListener('input', () => {
-  const v = document.getElementById('credit-score').value;
-  if (v) document.getElementById('credit-score-display').textContent = v;
-  autoSave();
-});
+function calcDebt(){
+  let rem=0;
+  DEBTS.forEach(({id,start})=>{const v=parseFloat(document.getElementById('bal-'+id)?.value);rem+=isNaN(v)?start:Math.max(0,v);});
+  const paid=TOTAL_START-rem;const pct=clamp((paid/TOTAL_START)*100,0,100);
+  document.getElementById('total-debt-display').textContent=rem.toLocaleString('en-US',{maximumFractionDigits:0});
+  document.getElementById('total-paid-display').textContent=Math.max(0,paid).toLocaleString('en-US',{maximumFractionDigits:0});
+  setBar('bf-total-debt','bp-total-debt',pct);setRing('ring-finance','rpct-finance',pct);
+}
 
-document.getElementById('run-miles')?.addEventListener('input', autoSave);
-document.getElementById('career-notes')?.addEventListener('input', autoSave);
+DEBTS.forEach(({id,start})=>{ni('bal-'+id,()=>{updDebt(id,start);calcDebt();autoSave();});});
+
+// ── Water ─────────────────────────────────────────────────────────────────────
+let waterCount=0;
+function renderWater(){
+  const c=document.getElementById('water-btns');if(!c)return;c.innerHTML='';
+  for(let i=1;i<=8;i++){
+    const btn=document.createElement('button');btn.textContent='💧';
+    const on=i<=waterCount;
+    btn.style.cssText=`width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:1rem;transition:all 0.15s;border:1.5px solid ${on?'var(--blue)':'var(--border)'};background:${on?'rgba(59,130,246,0.25)':'var(--subtle)'};opacity:${on?1:0.4}`;
+    btn.addEventListener('click',()=>{waterCount=waterCount===i?i-1:i;renderWater();updWater();computeAllRings();autoSave();});
+    c.appendChild(btn);
+  }
+}
+function updWater(){const pct=(waterCount/8)*100;const f=document.getElementById('bf-water'),l=document.getElementById('bp-water');if(f)f.style.width=pct+'%';if(l)l.textContent=`${waterCount} / 8`;}
+renderWater();
 
 // ── Ring calculations ──────────────────────────────────────────────────────────
-function getBarPct(barId) {
-  const el = document.getElementById(barId);
-  if (!el) return 0;
-  return parseFloat(el.style.width) || 0;
+function computeAllRings(){
+  const trainAvg=(getBarPct('bf-nw3c')+getBarPct('bf-fema')+getBarPct('bf-acams')+getBarPct('bf-taskforce'))/4;
+  setRing('ring-career','rpct-career',(trainAvg*0.5)+(clPct('career-cl')*0.5));
+  const wPct=getBarPct('bf-weight'),bfP=getBarPct('bf-bfpct-bar'),stP=getBarPct('bf-steps'),wtrP=(waterCount/8)*100,ppP=getBarPct('bf-pushup');
+  setRing('ring-fitness','rpct-fitness',(wPct*0.25)+(bfP*0.15)+(stP*0.15)+(wtrP*0.1)+(ppP*0.1)+(clPct('fitness-cl')*0.25));
+  setRing('ring-music','rpct-music',(getBarPct('bf-rev')*0.6)+(clPct('music-cl')*0.4));
 }
 
-function getChecklistPct(checklistId) {
-  const list = document.getElementById(checklistId);
-  if (!list) return 0;
-  const items = list.querySelectorAll('li');
-  const done = list.querySelectorAll('li.done');
-  return items.length ? (done.length / items.length) * 100 : 0;
-}
-
-function computeCareerRing() {
-  const studyAvg = (getBarPct('bar-invest') + getBarPct('bar-court') + getBarPct('bar-pros') + getBarPct('bar-gig')) / 4;
-  const checkPct = getChecklistPct('career-checklist');
-  setRing('ring-career', 'pct-career', (studyAvg * 0.5) + (checkPct * 0.5));
-}
-
-function computeFitnessRing() {
-  const weightPct = getBarPct('bar-weight');
-  const pushPct   = getBarPct('bar-pushup');
-  const runPct    = getBarPct('bar-marathon');
-  const dailyPct  = getChecklistPct('fitness-checklist');
-  setRing('ring-fitness', 'pct-fitness', (weightPct * 0.35) + (pushPct * 0.2) + (runPct * 0.2) + (dailyPct * 0.25));
-}
-
-function computeMusicRing() {
-  const revPct   = getBarPct('bar-rev');
-  const checkPct = getChecklistPct('music-checklist');
-  setRing('ring-music', 'pct-music', (revPct * 0.6) + (checkPct * 0.4));
-}
-
-function computeFinanceRing() {
-  const loanPct = getBarPct('bar-loan');
-  const ccPct   = getBarPct('bar-cc');
-  setRing('ring-finance', 'pct-finance', (loanPct * 0.4) + (ccPct * 0.6));
-}
-
-function computeAllRings() {
-  computeCareerRing();
-  computeFitnessRing();
-  computeMusicRing();
-  computeFinanceRing();
-}
-
-// ── Save / Load ────────────────────────────────────────────────────────────────
-function collectState() {
-  const checks = {};
-  document.querySelectorAll('.checklist li').forEach(li => {
-    checks[li.dataset.id] = li.classList.contains('done');
-  });
-
-  return {
-    checks,
-    studyBars: {
-      invest: parseFloat(document.getElementById('bar-invest')?.style.width) || 0,
-      court:  parseFloat(document.getElementById('bar-court')?.style.width) || 0,
-      pros:   parseFloat(document.getElementById('bar-pros')?.style.width) || 0,
-      gig:    parseFloat(document.getElementById('bar-gig')?.style.width) || 0,
-    },
-    marathon: parseFloat(document.getElementById('bar-marathon')?.style.width) || 0,
-    reloc: parseFloat(document.getElementById('bar-reloc')?.style.width) || 0,
-    weight: document.getElementById('current-weight')?.value || '',
-    pushup: document.getElementById('pushup-count')?.value || '',
-    miles:  document.getElementById('run-miles')?.value || '',
-    revenue: document.getElementById('music-revenue')?.value || '',
-    loan:   document.getElementById('loan-bal')?.value || '',
-    cc:     document.getElementById('cc-bal')?.value || '',
-    credit: document.getElementById('credit-score')?.value || '',
-    notes:  document.getElementById('career-notes')?.value || '',
+// ── Save / Load ───────────────────────────────────────────────────────────────
+function collectState(){
+  const checks={};
+  document.querySelectorAll('.cl li').forEach(li=>{if(li.dataset.id)checks[li.dataset.id]=li.classList.contains('done');});
+  const bars={};['nw3c','fema','acams','taskforce'].forEach(k=>{bars[k]=parseFloat(document.getElementById('bf-'+k)?.style.width)||0;});
+  const prs={};PR_KEYS.forEach(k=>{prs[k]=document.getElementById('pr-'+k)?.value||'';});
+  const debtBals={};DEBTS.forEach(({id})=>{debtBals[id]=document.getElementById('bal-'+id)?.value||'';});
+  return{
+    checks,bars,prs,debtBals,waterCount,
+    weight:document.getElementById('current-weight')?.value||'',
+    bfPct:document.getElementById('bf-pct')?.value||'',
+    ffm:document.getElementById('ffm')?.value||'',
+    steps:document.getElementById('steps-count')?.value||'',
+    pushup:document.getElementById('pushup-count')?.value||'',
+    revenue:document.getElementById('music-revenue')?.value||'',
+    credit:document.getElementById('credit-score')?.value||'',
+    relocSavings:document.getElementById('reloc-savings')?.value||'',
+    notes:document.getElementById('career-notes')?.value||'',
+    iq1:document.getElementById('iq-ans-1')?.value||'',
+    iq2:document.getElementById('iq-ans-2')?.value||'',
   };
 }
 
-function applyState(s) {
-  if (!s) return;
-
-  // Checks
-  if (s.checks) {
-    document.querySelectorAll('.checklist li').forEach(li => {
-      if (s.checks[li.dataset.id]) li.classList.add('done');
-    });
-  }
-
-  // Study bars
-  if (s.studyBars) {
-    setBar('bar-invest', 'val-invest', s.studyBars.invest);
-    setBar('bar-court',  'val-court',  s.studyBars.court);
-    setBar('bar-pros',   'val-pros',   s.studyBars.pros);
-    setBar('bar-gig',    'val-gig',    s.studyBars.gig);
-  }
-
-  if (s.marathon !== undefined) {
-    document.getElementById('bar-marathon').style.width = s.marathon + '%';
-    document.getElementById('val-marathon').textContent = Math.round(s.marathon) + '%';
-  }
-
-  if (s.reloc !== undefined) {
-    document.getElementById('bar-reloc').style.width = s.reloc + '%';
-    document.getElementById('val-reloc').textContent = Math.round(s.reloc) + '%';
-  }
-
-  if (s.weight) {
-    document.getElementById('current-weight').value = s.weight;
-    const start = 257, goal = 212;
-    const pct = Math.max(0, Math.min(100, ((start - parseFloat(s.weight)) / (start - goal)) * 100));
-    setBar('bar-weight', 'val-weight', pct);
-  }
-
-  if (s.pushup) {
-    document.getElementById('pushup-count').value = s.pushup;
-    const pct = (parseFloat(s.pushup) / 70) * 100;
-    setBar('bar-pushup', 'val-pushup', pct);
-    document.getElementById('val-pushup').textContent = s.pushup;
-  }
-
-  if (s.miles) document.getElementById('run-miles').value = s.miles;
-
-  if (s.revenue) {
-    document.getElementById('music-revenue').value = s.revenue;
-    setBar('bar-rev', 'val-rev', (parseFloat(s.revenue) / 1000) * 100);
-  }
-
-  if (s.loan) {
-    document.getElementById('loan-bal').value = s.loan;
-    setBar('bar-loan', 'val-loan', ((16000 - parseFloat(s.loan)) / 16000) * 100);
-  }
-
-  if (s.cc) {
-    document.getElementById('cc-bal').value = s.cc;
-    setBar('bar-cc', 'val-cc', ((24000 - parseFloat(s.cc)) / 24000) * 100);
-  }
-
-  if (s.credit) {
-    document.getElementById('credit-score').value = s.credit;
-    document.getElementById('credit-score-display').textContent = s.credit;
-  }
-
-  if (s.notes) document.getElementById('career-notes').value = s.notes;
-
+function applyState(s){
+  if(!s)return;
+  if(s.checks)document.querySelectorAll('.cl li').forEach(li=>{if(li.dataset.id&&s.checks[li.dataset.id])li.classList.add('done');});
+  if(s.bars)['nw3c','fema','acams','taskforce'].forEach(k=>{const f=document.getElementById('bf-'+k),p=document.getElementById('bp-'+k);if(f)f.style.width=(s.bars[k]||0)+'%';if(p)p.textContent=Math.round(s.bars[k]||0)+'%';});
+  if(s.weight){document.getElementById('current-weight').value=s.weight;setBar('bf-weight','bp-weight',clamp(((257-parseFloat(s.weight))/45)*100,0,100));}
+  if(s.bfPct){document.getElementById('bf-pct').value=s.bfPct;setBar('bf-bfpct-bar','bp-bfpct',clamp(((28-parseFloat(s.bfPct))/13)*100,0,100));}
+  if(s.ffm){document.getElementById('ffm').value=s.ffm;document.getElementById('ffm')._manual=true;}
+  if(s.steps){document.getElementById('steps-count').value=s.steps;const pct=clamp((parseFloat(s.steps)/8000)*100,0,100);const f=document.getElementById('bf-steps'),l=document.getElementById('bp-steps');if(f)f.style.width=pct+'%';if(l)l.textContent=parseFloat(s.steps).toLocaleString();}
+  if(s.waterCount!==undefined){waterCount=s.waterCount;renderWater();updWater();}
+  if(s.pushup){document.getElementById('pushup-count').value=s.pushup;setBar('bf-pushup','bp-pushup',clamp((parseFloat(s.pushup)/70)*100,0,100));const d=document.getElementById('bp-pushup');if(d)d.textContent=s.pushup;}
+  if(s.prs)PR_KEYS.forEach(k=>{const el=document.getElementById('pr-'+k);if(el&&s.prs[k]){el.value=s.prs[k];const d=document.getElementById('prd-'+k);if(d)d.textContent=`${s.prs[k]} ${PR_UNITS[k]}`;}});
+  if(s.revenue){document.getElementById('music-revenue').value=s.revenue;setBar('bf-rev','bp-rev',clamp((parseFloat(s.revenue)/1000)*100,0,100));}
+  if(s.debtBals)DEBTS.forEach(({id,start})=>{if(s.debtBals[id]!==undefined&&s.debtBals[id]!==''){const el=document.getElementById('bal-'+id);if(el)el.value=s.debtBals[id];updDebt(id,start);}});
+  calcDebt();
+  if(s.credit){document.getElementById('credit-score').value=s.credit;document.getElementById('credit-score-display').textContent=s.credit;}
+  if(s.relocSavings){document.getElementById('reloc-savings').value=s.relocSavings;setBar('bf-reloc-savings','bp-reloc-savings',clamp((parseFloat(s.relocSavings)/10000)*100,0,100));}
+  if(s.notes)document.getElementById('career-notes').value=s.notes;
+  if(s.iq1){const el=document.getElementById('iq-ans-1');if(el)el.value=s.iq1;}
+  if(s.iq2){const el=document.getElementById('iq-ans-2');if(el)el.value=s.iq2;}
   computeAllRings();
 }
 
-let autoSaveTimer;
-function autoSave() {
-  clearTimeout(autoSaveTimer);
-  autoSaveTimer = setTimeout(() => {
-    try { localStorage.setItem('life-tracker-v1', JSON.stringify(collectState())); } catch(e) {}
-  }, 800);
+let saveTimer;
+function autoSave(){
+  clearTimeout(saveTimer);
+  const st=document.getElementById('save-status');
+  saveTimer=setTimeout(()=>{
+    try{localStorage.setItem('life-tracker-v3',JSON.stringify(collectState()));if(st){st.textContent='✓ saved';st.style.color='var(--green)';setTimeout(()=>{st.textContent='Daily Tracker';st.style.color='';},2000);}}
+    catch(e){if(st){st.textContent='✗ error';st.style.color='var(--red)';}}
+  },800);
 }
 
-function saveAll() {
-  try {
-    localStorage.setItem('life-tracker-v1', JSON.stringify(collectState()));
-    const msg = document.getElementById('save-msg');
-    msg.classList.add('show');
-    setTimeout(() => msg.classList.remove('show'), 2500);
-  } catch(e) {}
+function saveAll(){
+  try{localStorage.setItem('life-tracker-v3',JSON.stringify(collectState()));const m=document.getElementById('save-msg');if(m){m.classList.add('show');setTimeout(()=>m.classList.remove('show'),2500);}}catch(e){}
 }
 
-// Load on startup
-try {
-  const saved = localStorage.getItem('life-tracker-v1');
-  if (saved) applyState(JSON.parse(saved));
-} catch(e) {}
-
-// Animate rings in on load
-setTimeout(computeAllRings, 300);
+// ── Boot ──────────────────────────────────────────────────────────────────────
+renderIQ();
+try{const s=localStorage.getItem('life-tracker-v3');if(s)applyState(JSON.parse(s));}catch(e){}
+setTimeout(computeAllRings,300);
 </script>
 </body>
 </html>
