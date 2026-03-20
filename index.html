@@ -83,6 +83,17 @@ textarea{resize:vertical;min-height:80px;font-family:'DM Sans',sans-serif;font-s
 .pr-label{font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
 .pr-val{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--text);margin-bottom:6px}
 .disc-card{background:rgba(239,68,68,0.04);border:1px solid rgba(239,68,68,0.15);border-radius:12px;padding:20px}
+/* To-do list */
+.todo-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #1e1e24}
+.todo-item:last-child{border-bottom:none}
+.todo-cb{width:18px;height:18px;border-radius:5px;flex-shrink:0;border:1.5px solid var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s;background:transparent}
+.todo-item.done .todo-cb{background:var(--green);border-color:var(--green)}
+.todo-item.done .todo-cb::after{content:'✓';font-size:11px;color:#000;font-weight:700}
+.todo-input{flex:1;background:transparent;border:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.88rem;outline:none;padding:2px 0}
+.todo-input::placeholder{color:var(--muted)}
+.todo-item.done .todo-input{text-decoration:line-through;color:var(--muted)}
+.todo-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:2px 6px;border-radius:4px;transition:color 0.15s;flex-shrink:0}
+.todo-del:hover{color:var(--red)}
 .save-btn{background:var(--gold);color:#000;border:none;border-radius:8px;padding:12px 28px;font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:0.1em;cursor:pointer;transition:opacity 0.2s;display:block;margin:0 auto 40px}
 .save-btn:hover{opacity:0.85}
 .save-msg{text-align:center;font-family:'DM Mono',monospace;font-size:0.75rem;color:var(--green);letter-spacing:0.1em;text-transform:uppercase;height:20px;margin-top:-30px;margin-bottom:30px;opacity:0;transition:opacity 0.3s}
@@ -425,6 +436,23 @@ hr{border:none;border-top:1px solid var(--border);margin:32px 0}
   </div>
 </div>
 
+<hr/>
+
+<!-- DAILY TO-DO -->
+<div class="section">
+  <div class="sl"><span>Daily To-Do — Max 5 Tasks</span></div>
+  <div class="card">
+    <div class="ct"><div class="dot orange"></div> Today's Tasks</div>
+    <p style="font-size:0.8rem;color:var(--muted);margin-bottom:16px;line-height:1.5">5 tasks max. Keep it focused — if it's not on here it doesn't exist today.</p>
+    <div id="todo-list"></div>
+    <button id="add-todo-btn" onclick="addTodo()" style="margin-top:12px;background:var(--subtle);border:1px dashed var(--border);border-radius:8px;color:var(--muted);font-family:'DM Mono',monospace;font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;padding:10px;width:100%;cursor:pointer;transition:all 0.2s">+ Add Task</button>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+      <span style="font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--muted);letter-spacing:0.08em"><span id="todo-done-count">0</span> / <span id="todo-total-count">0</span> DONE TODAY</span>
+      <button onclick="clearDoneTodos()" style="background:none;border:none;color:var(--muted);font-family:'DM Mono',monospace;font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;padding:4px 8px;border-radius:4px;transition:color 0.2s">Clear Completed</button>
+    </div>
+  </div>
+</div>
+
 <button class="save-btn" onclick="saveAll()">SAVE PROGRESS</button>
 <div class="save-msg" id="save-msg">Progress saved ✓</div>
 
@@ -595,6 +623,7 @@ function collectState(){
     notes:document.getElementById('career-notes')?.value||'',
     iq1:document.getElementById('iq-ans-1')?.value||'',
     iq2:document.getElementById('iq-ans-2')?.value||'',
+    todos: todos,
   };
 }
 
@@ -617,6 +646,7 @@ function applyState(s){
   if(s.notes)document.getElementById('career-notes').value=s.notes;
   if(s.iq1){const el=document.getElementById('iq-ans-1');if(el)el.value=s.iq1;}
   if(s.iq2){const el=document.getElementById('iq-ans-2');if(el)el.value=s.iq2;}
+  if(s.todos){todos=s.todos;renderTodos();}
   computeAllRings();
 }
 
@@ -633,6 +663,66 @@ function autoSave(){
 function saveAll(){
   try{localStorage.setItem('life-tracker-v3',JSON.stringify(collectState()));const m=document.getElementById('save-msg');if(m){m.classList.add('show');setTimeout(()=>m.classList.remove('show'),2500);}}catch(e){}
 }
+
+// ── To-Do List ────────────────────────────────────────────────────────────────
+let todos = [];
+
+function renderTodos() {
+  const list = document.getElementById('todo-list');
+  const addBtn = document.getElementById('add-todo-btn');
+  if (!list) return;
+  list.innerHTML = '';
+  todos.forEach((todo, i) => {
+    const row = document.createElement('div');
+    row.className = 'todo-item' + (todo.done ? ' done' : '');
+    row.innerHTML = `
+      <div class="todo-cb" onclick="toggleTodo(${i})"></div>
+      <input class="todo-input" type="text" placeholder="What needs to get done..." value="${todo.text.replace(/"/g,'&quot;')}"
+        oninput="updateTodoText(${i}, this.value)" onkeydown="if(event.key==='Enter')addTodo()"/>
+      <button class="todo-del" onclick="deleteTodo(${i})" title="Remove">✕</button>`;
+    list.appendChild(row);
+  });
+  const doneCount = todos.filter(t => t.done).length;
+  const totalCount = todos.length;
+  document.getElementById('todo-done-count').textContent = doneCount;
+  document.getElementById('todo-total-count').textContent = totalCount;
+  if (addBtn) addBtn.style.display = todos.length >= 5 ? 'none' : 'block';
+}
+
+function addTodo() {
+  if (todos.length >= 5) return;
+  todos.push({ text: '', done: false });
+  renderTodos();
+  // Focus the new input
+  const inputs = document.querySelectorAll('.todo-input');
+  if (inputs.length) inputs[inputs.length - 1].focus();
+  autoSave();
+}
+
+function toggleTodo(i) {
+  todos[i].done = !todos[i].done;
+  renderTodos();
+  autoSave();
+}
+
+function updateTodoText(i, val) {
+  todos[i].text = val;
+  autoSave();
+}
+
+function deleteTodo(i) {
+  todos.splice(i, 1);
+  renderTodos();
+  autoSave();
+}
+
+function clearDoneTodos() {
+  todos = todos.filter(t => !t.done);
+  renderTodos();
+  autoSave();
+}
+
+renderTodos();
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 renderIQ();
