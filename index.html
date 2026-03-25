@@ -3,177 +3,490 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Progress Tracker</title>
+<title>TMR Progress Tracker</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
   --bg:#0a0a0b;--surface:#111114;--card:#17171c;--border:#222228;
-  --gold:#c9a84c;--blue:#3b82f6;--green:#22c55e;--red:#ef4444;--orange:#f97316;
+  --gold:#c9a84c;--blue:#3b82f6;--green:#22c55e;--red:#ef4444;--orange:#f97316;--purple:#a855f7;
   --text:#f0f0f0;--muted:#6b6b7a;--subtle:#2a2a32;
 }
 body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden}
-body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:0.6}
-.wrap{max-width:1100px;margin:0 auto;padding:40px 20px 60px;position:relative;z-index:1}
-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:36px;padding-bottom:24px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:16px}
-header h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(2.2rem,6vw,3.8rem);letter-spacing:0.04em;line-height:1}
-header h1 span{color:var(--gold)}
-header p{color:var(--muted);font-size:0.78rem;margin-top:6px;font-family:'DM Mono',monospace;letter-spacing:0.1em;text-transform:uppercase}
-.date-badge{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 16px;text-align:right}
-.date-badge strong{display:block;font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:var(--gold)}
-.date-badge span{font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--muted)}
-.mission{background:rgba(201,168,76,0.07);border:1px solid rgba(201,168,76,0.25);border-left:4px solid var(--gold);border-radius:8px;padding:18px 22px;margin-bottom:36px;font-size:0.92rem;color:#d4bc7a;font-style:italic;line-height:1.6}
-.mission strong{font-style:normal;color:var(--gold);font-family:'DM Mono',monospace;font-size:0.65rem;letter-spacing:0.14em;text-transform:uppercase;display:block;margin-bottom:6px}
-.sl{display:flex;align-items:center;gap:10px;margin-bottom:16px}
-.sl span{font-family:'DM Mono',monospace;font-size:0.68rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:0.5}
+
+/* ── NAV ── */
+nav{position:sticky;top:0;z-index:100;background:rgba(10,10,11,0.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 20px}
+.nav-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:4px;overflow-x:auto;scrollbar-width:none}
+.nav-inner::-webkit-scrollbar{display:none}
+.nav-btn{font-family:'DM Mono',monospace;font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);padding:14px 16px;cursor:pointer;border:none;background:none;white-space:nowrap;border-bottom:2px solid transparent;transition:all 0.2s}
+.nav-btn:hover{color:var(--text)}
+.nav-btn.active{color:var(--gold);border-bottom-color:var(--gold)}
+.nav-btn.priority{color:var(--green)}
+.nav-btn.priority.active{color:var(--green);border-bottom-color:var(--green)}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:12px;padding:8px 0}
+.save-indicator{font-family:'DM Mono',monospace;font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);transition:color 0.3s}
+.save-indicator.saving{color:var(--gold)}.save-indicator.saved{color:var(--green)}.save-indicator.error{color:var(--red)}
+
+/* ── LAYOUT ── */
+.wrap{max-width:1100px;margin:0 auto;padding:36px 20px 60px;position:relative;z-index:1}
+.page{display:none}.page.active{display:block}
+
+/* ── HEADER ── */
+.page-header{margin-bottom:32px;padding-bottom:20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px}
+.page-header h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(1.8rem,5vw,3rem);letter-spacing:0.04em;line-height:1}
+.page-header h2 span{color:var(--gold)}
+.page-header h2 span.green{color:var(--green)}
+.date-chip{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-family:'DM Mono',monospace;font-size:0.72rem;color:var(--muted);text-align:right}
+.date-chip strong{display:block;color:var(--gold);font-size:1rem;font-family:'Bebas Neue',sans-serif;letter-spacing:0.04em}
+
+/* ── MISSION ── */
+.mission{background:rgba(201,168,76,0.07);border:1px solid rgba(201,168,76,0.25);border-left:4px solid var(--gold);border-radius:8px;padding:16px 20px;margin-bottom:28px;font-size:0.88rem;color:#d4bc7a;font-style:italic;line-height:1.6}
+.mission strong{font-style:normal;color:var(--gold);font-family:'DM Mono',monospace;font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;display:block;margin-bottom:4px}
+
+/* ── SECTION LABEL ── */
+.sl{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.sl span{font-family:'DM Mono',monospace;font-size:0.66rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
 .sl::after{content:'';flex:1;height:1px;background:var(--border)}
-.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px}
-.ct{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:0.06em;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+
+/* ── CARDS ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px}
+.card-title{font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:0.06em;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:8px}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0}
-.dot.blue{background:var(--blue)}.dot.green{background:var(--green)}.dot.red{background:var(--red)}.dot.orange{background:var(--orange)}
+.dot.blue{background:var(--blue)}.dot.green{background:var(--green)}.dot.red{background:var(--red)}.dot.orange{background:var(--orange)}.dot.purple{background:var(--purple)}
+
+/* ── GRIDS ── */
 .g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
-.g3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
-.rings-row{display:flex;justify-content:space-around;flex-wrap:wrap;gap:24px;padding:10px 0}
-.ring-wrap{display:flex;flex-direction:column;align-items:center;gap:8px}
-.ring-container{position:relative;width:100px;height:100px}
+.g3{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px}
+.g4{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+
+/* ── RINGS ── */
+.rings-row{display:flex;justify-content:space-around;flex-wrap:wrap;gap:20px;padding:8px 0}
+.ring-wrap{display:flex;flex-direction:column;align-items:center;gap:6px}
+.ring-container{position:relative;width:96px;height:96px}
 .ring-svg{transform:rotate(-90deg)}
 .ring-bg{fill:none;stroke:var(--subtle);stroke-width:8}
 .ring-fill{fill:none;stroke-width:8;stroke-linecap:round;stroke-dasharray:263.9;stroke-dashoffset:263.9;transition:stroke-dashoffset 0.8s cubic-bezier(0.4,0,0.2,1)}
 .ring-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.rpct{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:var(--text);line-height:1}
-.rsub{font-family:'DM Mono',monospace;font-size:0.55rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-top:2px}
-.rname{font-family:'DM Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)}
-.bw{margin-bottom:12px}
-.bm{display:flex;justify-content:space-between;margin-bottom:5px}
-.bl{font-size:0.82rem;color:#b0b0be}
-.bp{font-family:'DM Mono',monospace;font-size:0.75rem;color:var(--muted)}
+.rpct{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--text);line-height:1}
+.rsub{font-family:'DM Mono',monospace;font-size:0.5rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-top:2px}
+.rname{font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted)}
+
+/* ── BARS ── */
+.bw{margin-bottom:11px}
+.bm{display:flex;justify-content:space-between;margin-bottom:4px}
+.bl{font-size:0.8rem;color:#b0b0be}
+.bp{font-family:'DM Mono',monospace;font-size:0.73rem;color:var(--muted)}
 .bt{height:6px;background:var(--subtle);border-radius:99px;overflow:hidden}
 .bt.click{cursor:pointer}
 .bf{height:100%;border-radius:99px;background:var(--gold);transition:width 0.5s ease}
-.bf.blue{background:var(--blue)}.bf.green{background:var(--green)}.bf.red{background:var(--red)}
+.bf.blue{background:var(--blue)}.bf.green{background:var(--green)}.bf.red{background:var(--red)}.bf.purple{background:var(--purple)}
+
+/* ── CHECKLIST ── */
 .cl{list-style:none}
-.cl li{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid #1e1e24;cursor:pointer}
+.cl li{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid #1e1e24;cursor:pointer}
 .cl li:last-child{border-bottom:none}
 .cb{width:16px;height:16px;border-radius:4px;flex-shrink:0;margin-top:1px;border:1.5px solid var(--muted);display:flex;align-items:center;justify-content:center;transition:all 0.15s}
 .cl li.done .cb{background:var(--gold);border-color:var(--gold)}
 .cl li.done .cb::after{content:'✓';font-size:10px;color:#000;font-weight:700}
-.cl li span{font-size:0.83rem;color:#b0b0be;line-height:1.4}
+.cl li span{font-size:0.82rem;color:#b0b0be;line-height:1.4}
 .cl li.done span{text-decoration:line-through;color:var(--muted)}
-.sb{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:10px}
-.sl2{font-family:'DM Mono',monospace;font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
-.sv{font-family:'Bebas Neue',sans-serif;font-size:1.55rem;letter-spacing:0.04em;color:var(--text)}
-.sv.gold{color:var(--gold)}.sv.blue{color:var(--blue)}.sv.green{color:var(--green)}
-.ss{font-size:0.73rem;color:var(--muted);margin-top:2px}
-.fl{font-family:'DM Mono',monospace;font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:block}
-input[type=number],textarea{background:var(--subtle);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Mono',monospace;font-size:0.85rem;padding:8px 12px;outline:none;transition:border-color 0.2s;width:100%}
-input[type=number]:focus,textarea:focus{border-color:var(--gold)}
+
+/* ── STAT BOXES ── */
+.sb{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:11px 13px;margin-bottom:10px}
+.sl2{font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.sv{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:0.04em;color:var(--text)}
+.sv.gold{color:var(--gold)}.sv.blue{color:var(--blue)}.sv.green{color:var(--green)}.sv.red{color:var(--red)}
+.ss{font-size:0.72rem;color:var(--muted);margin-top:2px}
+
+/* ── INPUTS ── */
+.fl{font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;display:block}
+input[type=number],input[type=text],textarea,select{background:var(--subtle);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Mono',monospace;font-size:0.82rem;padding:8px 10px;outline:none;transition:border-color 0.2s;width:100%}
+input[type=number]:focus,input[type=text]:focus,textarea:focus,select:focus{border-color:var(--gold)}
 input[type=number]::-webkit-inner-spin-button{opacity:0.4}
-textarea{resize:vertical;min-height:80px;font-family:'DM Sans',sans-serif;font-size:0.85rem;line-height:1.5}
-.tag{display:inline-block;border-radius:4px;padding:2px 8px;font-size:0.68rem;font-family:'DM Mono',monospace;margin:2px;text-transform:uppercase;letter-spacing:0.08em}
+textarea{resize:vertical;min-height:75px;font-family:'DM Sans',sans-serif;font-size:0.84rem;line-height:1.5}
+select option{background:var(--card)}
+
+/* ── TAGS ── */
+.tag{display:inline-block;border-radius:4px;padding:2px 7px;font-size:0.65rem;font-family:'DM Mono',monospace;margin:2px;text-transform:uppercase;letter-spacing:0.08em}
 .tag.gold{background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:var(--gold)}
 .tag.blue{background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);color:var(--blue)}
 .tag.green{background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);color:var(--green)}
-.iq-card{background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.2);border-radius:10px;padding:16px 18px;margin-bottom:14px}
-.iq-num{font-family:'DM Mono',monospace;font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
-.iq-q{font-size:0.9rem;color:#e0d4b0;line-height:1.6;font-style:italic;margin-bottom:10px}
-.iq-card textarea{min-height:70px;background:rgba(0,0,0,0.3);border-color:rgba(201,168,76,0.15);font-size:0.82rem}
-.week-badge{display:inline-block;background:var(--subtle);border:1px solid var(--border);border-radius:6px;padding:4px 12px;font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:16px}
-.pr-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.tag.red{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:var(--red)}
+
+/* ── INTERVIEW CARDS ── */
+.iq-card{background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.2);border-radius:10px;padding:14px 16px;margin-bottom:12px}
+.iq-num{font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:5px}
+.iq-q{font-size:0.88rem;color:#e0d4b0;line-height:1.6;font-style:italic;margin-bottom:8px}
+.week-badge{display:inline-block;background:var(--subtle);border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:14px}
+
+/* ── PR GRID ── */
 .pr-box{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px}
-.pr-label{font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
-.pr-val{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--text);margin-bottom:6px}
-.disc-card{background:rgba(239,68,68,0.04);border:1px solid rgba(239,68,68,0.15);border-radius:12px;padding:20px}
-/* To-do list */
-.todo-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #1e1e24}
+.pr-label{font-family:'DM Mono',monospace;font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.pr-val{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--text);margin-bottom:6px}
+
+/* ── DISC CARD ── */
+.disc-card{background:rgba(239,68,68,0.04);border:1px solid rgba(239,68,68,0.15);border-radius:12px;padding:20px;margin-bottom:16px}
+
+/* ── BUDGET TABS ── */
+.tab-bar{display:flex;gap:4px;margin-bottom:20px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:4px}
+.tab-btn{flex:1;padding:8px;font-family:'DM Mono',monospace;font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);border:none;background:none;border-radius:7px;cursor:pointer;transition:all 0.2s}
+.tab-btn.active{background:var(--card);color:var(--gold);border:1px solid var(--border)}
+.tab-pane{display:none}.tab-pane.active{display:block}
+
+/* ── BUDGET TABLE ── */
+.budget-table{width:100%;border-collapse:collapse;font-size:0.83rem}
+.budget-table th{font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);padding:8px 10px;text-align:left;border-bottom:1px solid var(--border)}
+.budget-table td{padding:8px 10px;border-bottom:1px solid #1a1a20;vertical-align:middle}
+.budget-table tr:last-child td{border-bottom:none}
+.budget-table input{background:transparent;border:none;color:var(--text);font-family:'DM Mono',monospace;font-size:0.82rem;padding:2px 4px;outline:none;width:100%}
+.budget-table input:focus{border-bottom:1px solid var(--gold)}
+.budget-total-row td{font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:0.04em;border-top:1px solid var(--border);border-bottom:none;padding-top:12px}
+.add-row-btn{background:none;border:1px dashed var(--border);border-radius:6px;color:var(--muted);font-family:'DM Mono',monospace;font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;padding:8px;width:100%;cursor:pointer;margin-top:10px;transition:all 0.2s}
+.add-row-btn:hover{border-color:var(--gold);color:var(--gold)}
+.del-row-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.9rem;padding:2px 6px;transition:color 0.15s}
+.del-row-btn:hover{color:var(--red)}
+
+/* ── TO-DO ── */
+.todo-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #1e1e24}
 .todo-item:last-child{border-bottom:none}
-.todo-cb{width:18px;height:18px;border-radius:5px;flex-shrink:0;border:1.5px solid var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s;background:transparent}
+.todo-cb{width:18px;height:18px;border-radius:5px;flex-shrink:0;border:1.5px solid var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s}
 .todo-item.done .todo-cb{background:var(--green);border-color:var(--green)}
 .todo-item.done .todo-cb::after{content:'✓';font-size:11px;color:#000;font-weight:700}
-.todo-input{flex:1;background:transparent;border:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.88rem;outline:none;padding:2px 0}
+.todo-input{flex:1;background:transparent;border:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.86rem;outline:none;padding:2px 0}
 .todo-input::placeholder{color:var(--muted)}
 .todo-item.done .todo-input{text-decoration:line-through;color:var(--muted)}
-.todo-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:2px 6px;border-radius:4px;transition:color 0.15s;flex-shrink:0}
+.todo-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.95rem;padding:2px 6px;border-radius:4px;transition:color 0.15s}
 .todo-del:hover{color:var(--red)}
-.save-btn{background:var(--gold);color:#000;border:none;border-radius:8px;padding:12px 28px;font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:0.1em;cursor:pointer;transition:opacity 0.2s;display:block;margin:0 auto 40px}
-.save-btn:hover{opacity:0.85}
-.save-msg{text-align:center;font-family:'DM Mono',monospace;font-size:0.75rem;color:var(--green);letter-spacing:0.1em;text-transform:uppercase;height:20px;margin-top:-30px;margin-bottom:30px;opacity:0;transition:opacity 0.3s}
-.save-msg.show{opacity:1}
-hr{border:none;border-top:1px solid var(--border);margin:32px 0}
-.section{margin-bottom:36px}
-@media(max-width:600px){.g2,.g3{grid-template-columns:1fr}.rings-row{gap:16px}}
+
+/* ── HISTORY ── */
+.history-entry{background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:12px;overflow:hidden}
+.history-header{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;cursor:pointer;transition:background 0.15s}
+.history-header:hover{background:rgba(255,255,255,0.02)}
+.history-date{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:0.06em;color:var(--text)}
+.history-summary{font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--muted);letter-spacing:0.08em}
+.history-chevron{color:var(--muted);transition:transform 0.2s;font-size:0.8rem}
+.history-body{display:none;padding:0 18px 16px;border-top:1px solid var(--border)}
+.history-body.open{display:block}
+.history-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:14px}
+.history-stat{background:var(--surface);border-radius:6px;padding:10px 12px}
+.history-stat-label{font-family:'DM Mono',monospace;font-size:0.58rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.history-stat-val{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:var(--text)}
+.history-tasks{margin-top:10px}
+.history-task{font-size:0.8rem;color:#b0b0be;padding:3px 0;display:flex;gap:8px;align-items:center}
+.history-task.done{color:var(--muted);text-decoration:line-through}
+.log-btn{background:var(--gold);color:#000;border:none;border-radius:8px;padding:10px 24px;font-family:'Bebas Neue',sans-serif;font-size:0.95rem;letter-spacing:0.1em;cursor:pointer;transition:opacity 0.2s}
+.log-btn:hover{opacity:0.85}
+.no-history{text-align:center;padding:40px;font-family:'DM Mono',monospace;font-size:0.75rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase}
+
+/* ── MISC ── */
+hr{border:none;border-top:1px solid var(--border);margin:24px 0}
+.section{margin-bottom:28px}
+.priority-banner{background:rgba(34,197,94,0.07);border:1px solid rgba(34,197,94,0.2);border-left:4px solid var(--green);border-radius:8px;padding:12px 18px;margin-bottom:24px;font-family:'DM Mono',monospace;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--green)}
+@media(max-width:600px){.g2,.g3,.g4{grid-template-columns:1fr}.rings-row{gap:14px}}
 </style>
 </head>
 <body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <button class="nav-btn active" onclick="showPage('home')">🏠 Home</button>
+    <button class="nav-btn priority" onclick="showPage('debt')">💰 Debt</button>
+    <button class="nav-btn" onclick="showPage('fitness')">💪 Fitness</button>
+    <button class="nav-btn" onclick="showPage('career')">🏛️ Career</button>
+    <button class="nav-btn" onclick="showPage('music')">🎵 Music</button>
+    <button class="nav-btn" onclick="showPage('family')">👨‍👩‍👦 Family</button>
+    <button class="nav-btn" onclick="showPage('history')">📅 History</button>
+    <div class="nav-right">
+      <span class="save-indicator" id="save-indicator">Saved</span>
+    </div>
+  </div>
+</nav>
+
 <div class="wrap">
 
-<header>
-  <div>
-    <h1>YOUR <span>PROGRESS</span></h1>
-    <p>Three Lanes · One Mission · All In</p>
+<!-- ═══════════════════════════════════════════════════ HOME ═══ -->
+<div class="page active" id="page-home">
+  <div class="page-header">
+    <div>
+      <h2>YOUR <span>PROGRESS</span></h2>
+      <p style="color:var(--muted);font-size:0.75rem;margin-top:4px;font-family:'DM Mono',monospace;letter-spacing:0.1em;text-transform:uppercase">Three Lanes · One Mission · All In</p>
+    </div>
+    <div class="date-chip"><strong id="today-date"></strong>Daily Tracker</div>
   </div>
-  <div class="date-badge">
-    <strong id="today-date"></strong>
-    <span id="save-status">Daily Tracker</span>
-  </div>
-</header>
 
-<div class="mission">
-  <strong>Core Mission</strong>
-  Becoming a stronger man for your family while building long-term stability — as a father, a federal investigator, a disciplined man, and a music creator.
+  <div class="mission">
+    <strong>Core Mission</strong>
+    Becoming a stronger man for your family while building long-term stability — as a father, a federal investigator, a disciplined man, and a music creator.
+  </div>
+
+  <!-- Score Rings -->
+  <div class="section">
+    <div class="sl"><span>Overall Score</span></div>
+    <div class="card">
+      <div class="rings-row">
+        <div class="ring-wrap">
+          <div class="ring-container"><svg class="ring-svg" width="96" height="96" viewBox="0 0 100 100"><circle class="ring-bg" cx="50" cy="50" r="42"/><circle class="ring-fill" id="ring-career" cx="50" cy="50" r="42" style="stroke:var(--gold)"/></svg><div class="ring-inner"><span class="rpct" id="rpct-career">0%</span><span class="rsub">career</span></div></div>
+          <span class="rname">1811 Path</span>
+        </div>
+        <div class="ring-wrap">
+          <div class="ring-container"><svg class="ring-svg" width="96" height="96" viewBox="0 0 100 100"><circle class="ring-bg" cx="50" cy="50" r="42"/><circle class="ring-fill" id="ring-fitness" cx="50" cy="50" r="42" style="stroke:var(--green)"/></svg><div class="ring-inner"><span class="rpct" id="rpct-fitness">0%</span><span class="rsub">fitness</span></div></div>
+          <span class="rname">Body</span>
+        </div>
+        <div class="ring-wrap">
+          <div class="ring-container"><svg class="ring-svg" width="96" height="96" viewBox="0 0 100 100"><circle class="ring-bg" cx="50" cy="50" r="42"/><circle class="ring-fill" id="ring-music" cx="50" cy="50" r="42" style="stroke:var(--blue)"/></svg><div class="ring-inner"><span class="rpct" id="rpct-music">0%</span><span class="rsub">music</span></div></div>
+          <span class="rname">Studio</span>
+        </div>
+        <div class="ring-wrap">
+          <div class="ring-container"><svg class="ring-svg" width="96" height="96" viewBox="0 0 100 100"><circle class="ring-bg" cx="50" cy="50" r="42"/><circle class="ring-fill" id="ring-finance" cx="50" cy="50" r="42" style="stroke:var(--green)"/></svg><div class="ring-inner"><span class="rpct" id="rpct-finance">0%</span><span class="rsub">debt</span></div></div>
+          <span class="rname">Debt Free</span>
+        </div>
+        <div class="ring-wrap">
+          <div class="ring-container"><svg class="ring-svg" width="96" height="96" viewBox="0 0 100 100"><circle class="ring-bg" cx="50" cy="50" r="42"/><circle class="ring-fill" id="ring-family" cx="50" cy="50" r="42" style="stroke:var(--gold)"/></svg><div class="ring-inner"><span class="rpct" id="rpct-family">0%</span><span class="rsub">family</span></div></div>
+          <span class="rname">Family</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Snapshots -->
+  <div class="section">
+    <div class="sl"><span>Quick Snapshot</span></div>
+    <div class="g3">
+      <div class="card" style="cursor:pointer" onclick="showPage('debt')">
+        <div class="card-title"><div class="dot green"></div> Debt Priority</div>
+        <div class="sv green" style="font-size:1.8rem">$<span id="home-debt-remaining">42,608</span></div>
+        <div class="ss">Remaining · <span id="home-debt-pct">0%</span> eliminated</div>
+        <div class="bw" style="margin-top:10px;margin-bottom:0"><div class="bt"><div class="bf green" id="home-bf-debt" style="width:0%"></div></div></div>
+      </div>
+      <div class="card" style="cursor:pointer" onclick="showPage('fitness')">
+        <div class="card-title"><div class="dot green"></div> Weight</div>
+        <div class="sv" id="home-weight-display">257 <span style="font-size:1rem;color:var(--muted)">lbs</span></div>
+        <div class="ss">Goal: 212 lbs · <span id="home-weight-pct">0%</span> there</div>
+        <div class="bw" style="margin-top:10px;margin-bottom:0"><div class="bt"><div class="bf green" id="home-bf-weight" style="width:0%"></div></div></div>
+      </div>
+      <div class="card" style="cursor:pointer" onclick="showPage('music')">
+        <div class="card-title"><div class="dot blue"></div> Studio Revenue</div>
+        <div class="sv blue">$<span id="home-revenue-display">0</span></div>
+        <div class="ss">Goal: $1,000 / month</div>
+        <div class="bw" style="margin-top:10px;margin-bottom:0"><div class="bt"><div class="bf blue" id="home-bf-rev" style="width:0%"></div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- To-Do -->
+  <div class="section">
+    <div class="sl"><span>Today's To-Do — Max 5</span></div>
+    <div class="card">
+      <div class="card-title"><div class="dot orange"></div> Daily Tasks</div>
+      <div id="todo-list"></div>
+      <button id="add-todo-btn" onclick="addTodo()" style="margin-top:10px;background:var(--subtle);border:1px dashed var(--border);border-radius:8px;color:var(--muted);font-family:'DM Mono',monospace;font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;padding:9px;width:100%;cursor:pointer;transition:all 0.2s">+ Add Task</button>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+        <span style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--muted);letter-spacing:0.08em"><span id="todo-done">0</span> / <span id="todo-total">0</span> Done Today</span>
+        <button onclick="clearDoneTodos()" style="background:none;border:none;color:var(--muted);font-family:'DM Mono',monospace;font-size:0.65rem;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;padding:4px 8px;border-radius:4px">Clear Completed</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Log button -->
+  <div style="text-align:center;margin-top:8px;margin-bottom:16px">
+    <button class="log-btn" onclick="logToday()">📸 Log Today's Progress</button>
+    <p style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--muted);margin-top:8px;letter-spacing:0.08em">Saves a snapshot to History</p>
+  </div>
 </div>
 
-<!-- RINGS -->
-<div class="section">
-  <div class="sl"><span>Weekly Score</span></div>
+<!-- ═══════════════════════════════════════════════════ DEBT ═══ -->
+<div class="page" id="page-debt">
+  <div class="page-header">
+    <div><h2>DEBT <span class="green">ELIMINATION</span></h2></div>
+    <div class="date-chip"><strong id="debt-date"></strong>Priority Page</div>
+  </div>
+
+  <div class="priority-banner">🎯 Current Priority — Attack debt aggressively. Every dollar freed up is a dollar that builds your future.</div>
+
+  <!-- Summary -->
   <div class="card">
-    <div class="rings-row">
-      <div class="ring-wrap">
-        <div class="ring-container">
-          <svg class="ring-svg" width="100" height="100" viewBox="0 0 100 100"><circle class="ring-bg" cx="50" cy="50" r="42"/><circle class="ring-fill" id="ring-career" cx="50" cy="50" r="42" style="stroke:var(--gold)"/></svg>
-          <div class="ring-inner"><span class="rpct" id="rpct-career">0%</span><span class="rsub">career</span></div>
-        </div><span class="rname">1811 Path</span>
+    <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:16px">
+      <div><div class="sl2">Total Remaining</div><div class="sv red" style="font-size:2rem">$<span id="total-debt-display">42,608</span></div></div>
+      <div><div class="sl2">Total Paid Off</div><div class="sv green" style="font-size:2rem">$<span id="total-paid-display">0</span></div></div>
+      <div><div class="sl2">Credit Score</div><div class="sv gold" style="font-size:2rem" id="credit-score-display">650</div></div>
+      <div><div class="sl2">Monthly Minimums</div><div class="sv" style="font-size:2rem">$1,481</div></div>
+    </div>
+    <div class="bw" style="margin-bottom:0">
+      <div class="bm"><span class="bl">Overall Debt Eliminated</span><span class="bp" id="bp-total-debt">0%</span></div>
+      <div class="bt" style="height:10px"><div class="bf green" id="bf-total-debt" style="width:0%;height:100%"></div></div>
+    </div>
+  </div>
+
+  <!-- Accounts -->
+  <div class="sl" style="margin-top:20px"><span>Personal Accounts</span></div>
+  <div class="g3">
+    <div class="card"><div class="card-title"><div class="dot red"></div> Capital One</div><div class="sb"><div class="sl2">Starting</div><div class="sv">$6,423</div><div class="ss">Min: $181 · Due: 28th</div></div><label class="fl">Current Balance ($)</label><input type="number" id="bal-cap1" placeholder="6423" min="0" max="9999"/><div class="bw" style="margin-top:10px;margin-bottom:0"><div class="bm"><span class="bl">Paid Off</span><span class="bp" id="bp-cap1">0%</span></div><div class="bt"><div class="bf green" id="bf-cap1" style="width:0%"></div></div></div></div>
+    <div class="card"><div class="card-title"><div class="dot green"></div> Express</div><div class="sb"><div class="sl2">Balance</div><div class="sv green">$0</div><div class="ss">Min: $37 · Due: 28th</div></div><div class="sb" style="background:rgba(34,197,94,0.06);border-color:rgba(34,197,94,0.2)"><div class="sl2" style="color:var(--green)">✓ Clear</div><div class="sv green">PAID OFF</div></div></div>
+    <div class="card"><div class="card-title"><div class="dot red"></div> Best Buy</div><div class="sb"><div class="sl2">Starting</div><div class="sv">$1,999</div><div class="ss">Min: $291 · Due: 18th</div></div><label class="fl">Current Balance ($)</label><input type="number" id="bal-bestbuy" placeholder="1999" min="0" max="9999"/><div class="bw" style="margin-top:10px;margin-bottom:0"><div class="bm"><span class="bl">Paid Off</span><span class="bp" id="bp-bestbuy">0%</span></div><div class="bt"><div class="bf green" id="bf-bestbuy" style="width:0%"></div></div></div></div>
+    <div class="card"><div class="card-title"><div class="dot green"></div> Macy's</div><div class="sb"><div class="sl2">Balance</div><div class="sv green">$0</div><div class="ss">Min: $50 · Due: 13th</div></div><div class="sb" style="background:rgba(34,197,94,0.06);border-color:rgba(34,197,94,0.2)"><div class="sl2" style="color:var(--green)">✓ Clear</div><div class="sv green">PAID OFF</div></div></div>
+    <div class="card"><div class="card-title"><div class="dot red"></div> Chase Personal</div><div class="sb"><div class="sl2">Starting</div><div class="sv">$18,600</div><div class="ss">Min: $535 · Due: 2nd</div></div><label class="fl">Current Balance ($)</label><input type="number" id="bal-chase" placeholder="18600" min="0" max="99999"/><div class="bw" style="margin-top:10px;margin-bottom:0"><div class="bm"><span class="bl">Paid Off</span><span class="bp" id="bp-chase">0%</span></div><div class="bt"><div class="bf green" id="bf-chase" style="width:0%"></div></div></div></div>
+    <div class="card"><div class="card-title"><div class="dot red"></div> Citi</div><div class="sb"><div class="sl2">Starting</div><div class="sv">$4,586</div><div class="ss">Min: $45 · Due: 27th</div></div><label class="fl">Current Balance ($)</label><input type="number" id="bal-citi" placeholder="4586" min="0" max="9999"/><div class="bw" style="margin-top:10px;margin-bottom:0"><div class="bm"><span class="bl">Paid Off</span><span class="bp" id="bp-citi">0%</span></div><div class="bt"><div class="bf green" id="bf-citi" style="width:0%"></div></div></div></div>
+  </div>
+
+  <div class="sl" style="margin-top:20px"><span>Business Account</span></div>
+  <div class="g2">
+    <div class="card"><div class="card-title"><div class="dot blue"></div> Chase Business</div><div class="sb"><div class="sl2">Starting</div><div class="sv">$11,000</div><div class="ss">Min: $373 · Due: 5th</div></div><label class="fl">Current Balance ($)</label><input type="number" id="bal-biz" placeholder="11000" min="0" max="99999"/><div class="bw" style="margin-top:10px;margin-bottom:0"><div class="bm"><span class="bl">Paid Off</span><span class="bp" id="bp-biz">0%</span></div><div class="bt"><div class="bf blue" id="bf-biz" style="width:0%"></div></div></div></div>
+    <div class="card"><div class="card-title"><div class="dot gold"></div> Credit Score</div><div class="sb"><div class="sl2">Current Score</div><div class="sv gold" id="credit-score-display2">650</div><div class="ss">Goal: 750+</div></div><label class="fl">Update Score</label><input type="number" id="credit-score" placeholder="650" min="300" max="850"/></div>
+  </div>
+
+  <hr/>
+
+  <!-- BUDGET ORGANIZER -->
+  <div class="section">
+    <div class="sl"><span>Budget Organizer</span></div>
+    <div class="card">
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="showBudgetTab('income')">Income</button>
+        <button class="tab-btn" onclick="showBudgetTab('expenses')">Expenses</button>
+        <button class="tab-btn" onclick="showBudgetTab('summary')">Summary</button>
       </div>
-      <div class="ring-wrap">
-        <div class="ring-container">
-          <svg class="ring-svg" width="100" height="100" viewBox="0 0 100 100"><circle class="ring-bg" cx="50" cy="50" r="42"/><circle class="ring-fill" id="ring-fitness" cx="50" cy="50" r="42" style="stroke:var(--green)"/></svg>
-          <div class="ring-inner"><span class="rpct" id="rpct-fitness">0%</span><span class="rsub">fitness</span></div>
-        </div><span class="rname">Body Transformation</span>
+
+      <!-- INCOME TAB -->
+      <div class="tab-pane active" id="budget-income">
+        <div class="card-title" style="margin-bottom:12px"><div class="dot green"></div> Monthly Net Income</div>
+        <table class="budget-table" id="income-table">
+          <thead><tr><th>Source</th><th>Amount ($)</th><th></th></tr></thead>
+          <tbody id="income-tbody"></tbody>
+        </table>
+        <button class="add-row-btn" onclick="addIncomeRow()">+ Add Income Source</button>
+        <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+          <span style="font-family:'DM Mono',monospace;font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em">Total Net Income</span>
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--green)">$<span id="income-total">0</span></span>
+        </div>
       </div>
-      <div class="ring-wrap">
-        <div class="ring-container">
-          <svg class="ring-svg" width="100" height="100" viewBox="0 0 100 100"><circle class="ring-bg" cx="50" cy="50" r="42"/><circle class="ring-fill" id="ring-music" cx="50" cy="50" r="42" style="stroke:var(--blue)"/></svg>
-          <div class="ring-inner"><span class="rpct" id="rpct-music">0%</span><span class="rsub">music</span></div>
-        </div><span class="rname">Studio Growth</span>
+
+      <!-- EXPENSES TAB -->
+      <div class="tab-pane" id="budget-expenses">
+        <div class="card-title" style="margin-bottom:12px"><div class="dot red"></div> Monthly Expenses</div>
+        <table class="budget-table" id="expense-table">
+          <thead><tr><th>Category</th><th>Budgeted ($)</th><th>Actual ($)</th><th></th></tr></thead>
+          <tbody id="expense-tbody"></tbody>
+        </table>
+        <button class="add-row-btn" onclick="addExpenseRow()">+ Add Expense</button>
+        <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <span style="font-family:'DM Mono',monospace;font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em">Total Budgeted</span>
+            <span style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--text)">$<span id="expense-budgeted-total">0</span></span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-family:'DM Mono',monospace;font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em">Total Actual</span>
+            <span style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--red)">$<span id="expense-actual-total">0</span></span>
+          </div>
+        </div>
       </div>
-      <div class="ring-wrap">
-        <div class="ring-container">
-          <svg class="ring-svg" width="100" height="100" viewBox="0 0 100 100"><circle class="ring-bg" cx="50" cy="50" r="42"/><circle class="ring-fill" id="ring-finance" cx="50" cy="50" r="42" style="stroke:var(--gold)"/></svg>
-          <div class="ring-inner"><span class="rpct" id="rpct-finance">0%</span><span class="rsub">debt</span></div>
-        </div><span class="rname">Debt Elimination</span>
+
+      <!-- SUMMARY TAB -->
+      <div class="tab-pane" id="budget-summary">
+        <div class="card-title" style="margin-bottom:16px"><div class="dot gold"></div> Monthly Summary</div>
+        <div class="g2">
+          <div class="sb"><div class="sl2">Total Net Income</div><div class="sv green">$<span id="sum-income">0</span></div></div>
+          <div class="sb"><div class="sl2">Total Expenses (Actual)</div><div class="sv red">$<span id="sum-expenses">0</span></div></div>
+          <div class="sb"><div class="sl2">Debt Minimums</div><div class="sv">$1,481</div></div>
+          <div class="sb"><div class="sl2">Leftover / Extra to Debt</div><div class="sv gold">$<span id="sum-leftover">0</span></div></div>
+        </div>
+        <div class="bw" style="margin-top:16px">
+          <div class="bm"><span class="bl">Expenses vs Income</span><span class="bp" id="bp-budget">0%</span></div>
+          <div class="bt" style="height:8px"><div class="bf red" id="bf-budget" style="width:0%;height:100%"></div></div>
+        </div>
+        <div style="margin-top:16px;padding:14px;background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.15);border-radius:8px">
+          <div style="font-family:'DM Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--green);margin-bottom:4px">Recommendation</div>
+          <div id="budget-advice" style="font-size:0.83rem;color:#b0b0be;line-height:1.5">Enter your income and expenses to see your monthly recommendation.</div>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
-<hr/>
+<!-- ═══════════════════════════════════════════════════ FITNESS ═══ -->
+<div class="page" id="page-fitness">
+  <div class="page-header"><div><h2>BODY <span>TRANSFORMATION</span></h2></div><div class="date-chip"><strong id="fit-date"></strong>90-Day Cut</div></div>
 
-<!-- CAREER -->
-<div class="section">
-  <div class="sl"><span>Lane 01 — Career · 1811 Path</span></div>
-  <div class="g2">
+  <div class="g3 section">
     <div class="card">
-      <div class="ct"><div class="dot"></div> Training Progress</div>
+      <div class="card-title"><div class="dot green"></div> Weight</div>
+      <div class="sb"><div class="sl2">Starting</div><div class="sv">257 lbs</div></div>
+      <div class="sb"><div class="sl2">Goal</div><div class="sv">212 lbs</div><div class="ss">–45 lbs</div></div>
+      <label class="fl" style="margin-top:8px">Current Weight (lbs)</label>
+      <input type="number" id="current-weight" placeholder="257" min="150" max="350"/>
+      <div class="bw" style="margin-top:10px"><div class="bm"><span class="bl">Fat Loss Progress</span><span class="bp" id="bp-weight">0%</span></div><div class="bt"><div class="bf green" id="bf-weight" style="width:0%"></div></div></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><div class="dot green"></div> Body Composition</div>
+      <div class="sb"><div class="sl2">BF% Goal</div><div class="sv green">15%</div></div>
+      <label class="fl">Current Body Fat %</label>
+      <input type="number" id="bf-pct" placeholder="e.g. 28" min="5" max="60" step="0.1"/>
+      <div class="bw" style="margin-top:10px"><div class="bm"><span class="bl">BF% Progress</span><span class="bp" id="bp-bfpct">0%</span></div><div class="bt"><div class="bf green" id="bf-bfpct-bar" style="width:0%"></div></div></div>
+      <label class="fl" style="margin-top:8px">Fat Free Mass (lbs)</label>
+      <input type="number" id="ffm" placeholder="auto-calculated" min="100" max="300" step="0.1"/>
+      <div class="ss" style="margin-top:5px" id="ffm-note">Enter weight + BF% to auto-calculate</div>
+    </div>
+    <div class="card">
+      <div class="card-title"><div class="dot green"></div> Movement & Hydration</div>
+      <div class="bw"><div class="bm"><span class="bl">Steps (goal: 8,000)</span><span class="bp" id="bp-steps">0</span></div><div class="bt"><div class="bf green" id="bf-steps" style="width:0%"></div></div></div>
+      <input type="number" id="steps-count" placeholder="0" min="0" max="30000" style="margin-bottom:12px"/>
+      <div class="bw"><div class="bm"><span class="bl">Water (goal: 8 glasses)</span><span class="bp" id="bp-water">0 / 8</span></div><div class="bt"><div class="bf blue" id="bf-water" style="width:0%"></div></div></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px" id="water-btns"></div>
+    </div>
+  </div>
+
+  <div class="g2 section">
+    <div class="card">
+      <div class="card-title"><div class="dot green"></div> Daily Targets</div>
+      <ul class="cl" id="fitness-cl">
+        <li data-id="f1"><div class="cb"></div><span>200g+ protein hit today</span></li>
+        <li data-id="f2"><div class="cb"></div><span>Calorie deficit maintained</span></li>
+        <li data-id="f3"><div class="cb"></div><span>Strength training session done</span></li>
+        <li data-id="f4"><div class="cb"></div><span>20–30 min cardio completed</span></li>
+        <li data-id="f5"><div class="cb"></div><span>8,000 steps hit today</span></li>
+        <li data-id="f6"><div class="cb"></div><span>8 glasses of water hit today</span></li>
+        <li data-id="f7"><div class="cb"></div><span>8h sleep target</span></li>
+        <li data-id="f8"><div class="cb"></div><span>Supplements taken</span></li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-title"><div class="dot green"></div> Push-up Goal</div>
+      <div class="sb"><div class="sl2">Goal</div><div class="sv">70 / min</div></div>
+      <div class="bw"><div class="bm"><span class="bl">Push-ups / min</span><span class="bp" id="bp-pushup">0</span></div><div class="bt"><div class="bf green" id="bf-pushup" style="width:0%"></div></div></div>
+      <label class="fl">Best today</label>
+      <input type="number" id="pushup-count" placeholder="0" min="0" max="100"/>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="sl"><span>Personal Records</span></div>
+    <div class="g4">
+      <div class="pr-box"><div class="pr-label">Chest Press</div><div class="pr-val" id="prd-chest">— lbs</div><input type="number" id="pr-chest" placeholder="lbs" min="0" max="999"/></div>
+      <div class="pr-box"><div class="pr-label">Shoulder Press</div><div class="pr-val" id="prd-shoulder">— lbs</div><input type="number" id="pr-shoulder" placeholder="lbs" min="0" max="999"/></div>
+      <div class="pr-box"><div class="pr-label">Squat</div><div class="pr-val" id="prd-squat">— lbs</div><input type="number" id="pr-squat" placeholder="lbs" min="0" max="999"/></div>
+      <div class="pr-box"><div class="pr-label">Deadlift</div><div class="pr-val" id="prd-deadlift">— lbs</div><input type="number" id="pr-deadlift" placeholder="lbs" min="0" max="999"/></div>
+      <div class="pr-box"><div class="pr-label">Stairmaster Speed</div><div class="pr-val" id="prd-stair-speed">— lvl</div><input type="number" id="pr-stair-speed" placeholder="level" min="0" max="20" step="0.5"/></div>
+      <div class="pr-box"><div class="pr-label">Stairmaster Time</div><div class="pr-val" id="prd-stair-time">— min</div><input type="number" id="pr-stair-time" placeholder="mins" min="0" max="120"/></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ CAREER ═══ -->
+<div class="page" id="page-career">
+  <div class="page-header"><div><h2>CAREER <span>· 1811 PATH</span></h2></div><div class="date-chip"><strong id="career-date"></strong>Federal Investigator</div></div>
+
+  <div class="g2 section">
+    <div class="card">
+      <div class="card-title"><div class="dot"></div> Training Progress</div>
       <div class="bw"><div class="bm"><span class="bl">NW3C — Intro to Investigations</span><span class="bp" id="bp-nw3c">0%</span></div><div class="bt click" data-bar="nw3c"><div class="bf" id="bf-nw3c" style="width:0%"></div></div></div>
       <div class="bw"><div class="bm"><span class="bl">FEMA IS Courses (IS-100/200/700/800)</span><span class="bp" id="bp-fema">0%</span></div><div class="bt click" data-bar="fema"><div class="bf" id="bf-fema" style="width:0%"></div></div></div>
       <div class="bw"><div class="bm"><span class="bl">ACAMS Certification</span><span class="bp" id="bp-acams">0%</span></div><div class="bt click" data-bar="acams"><div class="bf" id="bf-acams" style="width:0%"></div></div></div>
       <div class="bw"><div class="bm"><span class="bl">Task Force Assignment</span><span class="bp" id="bp-taskforce">0%</span></div><div class="bt click" data-bar="taskforce"><div class="bf" id="bf-taskforce" style="width:0%"></div></div></div>
-      <div style="margin-top:10px">
-        <span class="tag gold">HSI</span><span class="tag gold">ATF</span>
-        <span class="tag gold">Transnational Crime</span><span class="tag gold">Financial Crimes</span>
-      </div>
+      <div style="margin-top:10px"><span class="tag gold">HSI</span><span class="tag gold">ATF</span><span class="tag gold">Transnational Crime</span><span class="tag gold">Financial Crimes</span></div>
     </div>
     <div class="card">
-      <div class="ct"><div class="dot"></div> Application & Pipeline</div>
+      <div class="card-title"><div class="dot"></div> Application & Pipeline</div>
       <ul class="cl" id="career-cl">
         <li data-id="c1"><div class="cb"></div><span>Check application status on USAJobs weekly</span></li>
         <li data-id="c2"><div class="cb"></div><span>Follow up with HSI point of contact</span></li>
@@ -189,156 +502,55 @@ hr{border:none;border-top:1px solid var(--border);margin:32px 0}
     </div>
   </div>
 
-  <!-- Interview Practice -->
-  <div style="margin-top:16px">
+  <div class="section">
     <div class="card">
-      <div class="ct"><div class="dot orange"></div> Weekly Interview Practice</div>
+      <div class="card-title"><div class="dot orange"></div> Weekly Interview Practice</div>
       <div class="week-badge" id="week-badge">Week 1</div>
       <div id="interview-questions"></div>
     </div>
   </div>
 
-  <!-- Disciplinary -->
-  <div style="margin-top:16px">
+  <div class="section">
     <div class="disc-card">
-      <div class="ct"><div class="dot red"></div> Disciplinary Action — Background Prep</div>
-      <p style="font-size:0.8rem;color:var(--muted);margin-bottom:14px;line-height:1.5">Work through these over time. Honesty and preparation are your strongest tools.</p>
+      <div class="card-title"><div class="dot red"></div> Disciplinary Action — Background Prep</div>
+      <p style="font-size:0.78rem;color:var(--muted);margin-bottom:12px;line-height:1.5">Work through these over time. Honesty and preparation are your strongest tools.</p>
       <ul class="cl" id="disc-cl">
         <li data-id="d1"><div class="cb"></div><span>Pull official disciplinary record documentation</span></li>
         <li data-id="d2"><div class="cb"></div><span>Write out honest narrative — what happened, what changed</span></li>
         <li data-id="d3"><div class="cb"></div><span>Collect commendations & positive reviews since incident</span></li>
-        <li data-id="d4"><div class="cb"></div><span>Consult a federal clearance attorney (one-time ~$200–$400)</span></li>
+        <li data-id="d4"><div class="cb"></div><span>Consult a federal clearance attorney (~$200–$400)</span></li>
         <li data-id="d5"><div class="cb"></div><span>Research insubordination adjudication under federal guidelines</span></li>
       </ul>
     </div>
   </div>
 
-  <div style="margin-top:16px">
+  <div class="section">
     <div class="card">
-      <div class="ct"><div class="dot"></div> Study Log & Notes</div>
+      <div class="card-title"><div class="dot"></div> Study Log & Notes</div>
       <textarea id="career-notes" placeholder="What did you study today? Cases reviewed, key concepts, insights..."></textarea>
     </div>
   </div>
 </div>
 
-<hr/>
+<!-- ═══════════════════════════════════════════════════ MUSIC ═══ -->
+<div class="page" id="page-music">
+  <div class="page-header"><div><h2>MUSIC <span>BUSINESS</span></h2></div><div class="date-chip"><strong id="music-date"></strong>Studio Growth</div></div>
 
-<!-- FITNESS -->
-<div class="section">
-  <div class="sl"><span>Lane 02 — Body Transformation · 90-Day Cut</span></div>
-
-  <div class="g3" style="margin-bottom:16px">
-    <!-- Weight -->
+  <div class="g2 section">
     <div class="card">
-      <div class="ct"><div class="dot green"></div> Weight</div>
-      <div class="sb"><div class="sl2">Starting</div><div class="sv">257 lbs</div></div>
-      <div class="sb"><div class="sl2">Goal</div><div class="sv">212 lbs</div><div class="ss">–45 lbs</div></div>
-      <label class="fl" style="margin-top:8px">Current Weight (lbs)</label>
-      <input type="number" id="current-weight" placeholder="257" min="150" max="350"/>
-      <div class="bw" style="margin-top:10px">
-        <div class="bm"><span class="bl">Fat Loss Progress</span><span class="bp" id="bp-weight">0%</span></div>
-        <div class="bt"><div class="bf green" id="bf-weight" style="width:0%"></div></div>
-      </div>
-    </div>
-
-    <!-- Body Composition -->
-    <div class="card">
-      <div class="ct"><div class="dot green"></div> Body Composition</div>
-      <div class="sb"><div class="sl2">Goal Body Fat %</div><div class="sv green">15%</div><div class="ss">Track weekly</div></div>
-      <label class="fl">Current Body Fat %</label>
-      <input type="number" id="bf-pct" placeholder="e.g. 28" min="5" max="60" step="0.1"/>
-      <div class="bw" style="margin-top:10px">
-        <div class="bm"><span class="bl">BF% Progress (goal: 15%)</span><span class="bp" id="bp-bfpct">0%</span></div>
-        <div class="bt"><div class="bf green" id="bf-bfpct-bar" style="width:0%"></div></div>
-      </div>
-      <label class="fl" style="margin-top:10px">Fat Free Mass (lbs)</label>
-      <input type="number" id="ffm" placeholder="auto-calculated" min="100" max="300" step="0.1"/>
-      <div class="ss" style="margin-top:6px" id="ffm-note">Enter weight + BF% to auto-calculate</div>
-    </div>
-
-    <!-- Movement & Hydration -->
-    <div class="card">
-      <div class="ct"><div class="dot green"></div> Movement & Hydration</div>
-      <div class="bw">
-        <div class="bm"><span class="bl">Steps Today (goal: 8,000)</span><span class="bp" id="bp-steps">0</span></div>
-        <div class="bt"><div class="bf green" id="bf-steps" style="width:0%"></div></div>
-      </div>
-      <input type="number" id="steps-count" placeholder="0" min="0" max="30000" style="margin-bottom:14px"/>
-      <div class="bw">
-        <div class="bm"><span class="bl">Water (goal: 8 glasses)</span><span class="bp" id="bp-water">0 / 8</span></div>
-        <div class="bt"><div class="bf blue" id="bf-water" style="width:0%"></div></div>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px" id="water-btns"></div>
-    </div>
-  </div>
-
-  <!-- Daily checklist + pushups -->
-  <div class="g2" style="margin-bottom:16px">
-    <div class="card">
-      <div class="ct"><div class="dot green"></div> Daily Targets</div>
-      <ul class="cl" id="fitness-cl">
-        <li data-id="f1"><div class="cb"></div><span>200g+ protein hit today</span></li>
-        <li data-id="f2"><div class="cb"></div><span>Calorie deficit maintained</span></li>
-        <li data-id="f3"><div class="cb"></div><span>Strength training session done</span></li>
-        <li data-id="f4"><div class="cb"></div><span>20–30 min cardio completed</span></li>
-        <li data-id="f5"><div class="cb"></div><span>8,000 steps hit today</span></li>
-        <li data-id="f6"><div class="cb"></div><span>8 glasses of water hit today</span></li>
-        <li data-id="f7"><div class="cb"></div><span>8h sleep target</span></li>
-        <li data-id="f8"><div class="cb"></div><span>Supplements taken</span></li>
-      </ul>
-    </div>
-    <div class="card">
-      <div class="ct"><div class="dot green"></div> Push-up Goal</div>
-      <div class="sb"><div class="sl2">Goal</div><div class="sv">70 / min</div></div>
-      <div class="bw">
-        <div class="bm"><span class="bl">Push-ups / min</span><span class="bp" id="bp-pushup">0</span></div>
-        <div class="bt"><div class="bf green" id="bf-pushup" style="width:0%"></div></div>
-      </div>
-      <label class="fl">Best push-ups / min today</label>
-      <input type="number" id="pushup-count" placeholder="0" min="0" max="100"/>
-    </div>
-  </div>
-
-  <!-- PRs -->
-  <div class="card">
-    <div class="ct"><div class="dot green"></div> Personal Records (PRs)</div>
-    <div class="pr-grid">
-      <div class="pr-box"><div class="pr-label">Chest Press</div><div class="pr-val" id="prd-chest">— lbs</div><input type="number" id="pr-chest" placeholder="lbs" min="0" max="999"/></div>
-      <div class="pr-box"><div class="pr-label">Shoulder Press</div><div class="pr-val" id="prd-shoulder">— lbs</div><input type="number" id="pr-shoulder" placeholder="lbs" min="0" max="999"/></div>
-      <div class="pr-box"><div class="pr-label">Squat</div><div class="pr-val" id="prd-squat">— lbs</div><input type="number" id="pr-squat" placeholder="lbs" min="0" max="999"/></div>
-      <div class="pr-box"><div class="pr-label">Deadlift</div><div class="pr-val" id="prd-deadlift">— lbs</div><input type="number" id="pr-deadlift" placeholder="lbs" min="0" max="999"/></div>
-      <div class="pr-box"><div class="pr-label">Stairmaster Speed</div><div class="pr-val" id="prd-stair-speed">— lvl</div><input type="number" id="pr-stair-speed" placeholder="level" min="0" max="20" step="0.5"/></div>
-      <div class="pr-box"><div class="pr-label">Stairmaster Time</div><div class="pr-val" id="prd-stair-time">— min</div><input type="number" id="pr-stair-time" placeholder="mins" min="0" max="120"/></div>
-    </div>
-  </div>
-</div>
-
-<hr/>
-
-<!-- MUSIC -->
-<div class="section">
-  <div class="sl"><span>Lane 03 — Music Business · Studio Growth</span></div>
-  <div class="g2">
-    <div class="card">
-      <div class="ct"><div class="dot blue"></div> Revenue Tracker</div>
-      <div class="sb"><div class="sl2">Monthly Revenue Goal</div><div class="sv gold">$1,000</div></div>
+      <div class="card-title"><div class="dot blue"></div> Revenue Tracker</div>
+      <div class="sb"><div class="sl2">Monthly Goal</div><div class="sv gold">$1,000</div></div>
       <label class="fl">Revenue This Month ($)</label>
       <input type="number" id="music-revenue" placeholder="0" min="0"/>
-      <div class="bw" style="margin-top:12px">
-        <div class="bm"><span class="bl">Toward $1k / month</span><span class="bp" id="bp-rev">0%</span></div>
-        <div class="bt"><div class="bf blue" id="bf-rev" style="width:0%"></div></div>
-      </div>
-      <div style="margin-top:10px">
-        <span class="tag blue">Beats</span><span class="tag blue">Mix/Master</span>
-        <span class="tag blue">Recording</span><span class="tag blue">Sync Licensing</span><span class="tag blue">Artist Mgmt</span>
-      </div>
+      <div class="bw" style="margin-top:12px"><div class="bm"><span class="bl">Toward $1k / month</span><span class="bp" id="bp-rev">0%</span></div><div class="bt"><div class="bf blue" id="bf-rev" style="width:0%"></div></div></div>
+      <div style="margin-top:10px"><span class="tag blue">Beats</span><span class="tag blue">Mix/Master</span><span class="tag blue">Recording</span><span class="tag blue">Sync Licensing</span><span class="tag blue">Artist Mgmt</span></div>
     </div>
     <div class="card">
-      <div class="ct"><div class="dot blue"></div> Artist Development</div>
-      <div class="sb"><div class="sl2">Signed Clients</div><div class="sv blue">1 <span style="font-size:0.9rem;color:var(--muted)">($300 package)</span></div><div class="ss">Target: Latin Urban · R&B · Local Indie</div></div>
+      <div class="card-title"><div class="dot blue"></div> Artist Development</div>
+      <div class="sb"><div class="sl2">Signed Clients</div><div class="sv blue">1 <span style="font-size:0.85rem;color:var(--muted)">($300 package)</span></div><div class="ss">Latin Urban · R&B · Local Indie</div></div>
       <ul class="cl" id="music-cl">
         <li data-id="m1"><div class="cb"></div><span>Deliver on current artist's package</span></li>
-        <li data-id="m2"><div class="cb"></div><span>Complete a release strategy for client</span></li>
+        <li data-id="m2"><div class="cb"></div><span>Complete release strategy for client</span></li>
         <li data-id="m3"><div class="cb"></div><span>Outreach to 1 new potential client</span></li>
         <li data-id="m4"><div class="cb"></div><span>Upload 1 new beat to catalog</span></li>
         <li data-id="m5"><div class="cb"></div><span>Research sync licensing opportunities</span></li>
@@ -346,53 +558,51 @@ hr{border:none;border-top:1px solid var(--border);margin:32px 0}
       </ul>
     </div>
   </div>
+
+  <div class="section">
+    <div class="sl"><span>Current Projects</span></div>
+    <div class="g3">
+      <div class="card">
+        <div class="card-title"><div class="dot purple"></div> Studio Upgrade</div>
+        <div class="bw"><div class="bm"><span class="bl">Progress</span><span class="bp" id="bp-studio-upgrade">0%</span></div><div class="bt click" data-bar="studio-upgrade"><div class="bf purple" id="bf-studio-upgrade" style="width:0%"></div></div></div>
+        <ul class="cl" id="studio-upgrade-cl">
+          <li data-id="su1"><div class="cb"></div><span>Identify gear / equipment needed</span></li>
+          <li data-id="su2"><div class="cb"></div><span>Set studio upgrade budget</span></li>
+          <li data-id="su3"><div class="cb"></div><span>Research and purchase priority items</span></li>
+          <li data-id="su4"><div class="cb"></div><span>Install and configure new setup</span></li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="dot blue"></div> LLORAR 2026</div>
+        <div class="bw"><div class="bm"><span class="bl">Completion</span><span class="bp" id="bp-llorar">0%</span></div><div class="bt click" data-bar="llorar"><div class="bf blue" id="bf-llorar" style="width:0%"></div></div></div>
+        <ul class="cl" id="llorar-cl">
+          <li data-id="ll1"><div class="cb"></div><span>Finalize arrangement</span></li>
+          <li data-id="ll2"><div class="cb"></div><span>Record final vocals</span></li>
+          <li data-id="ll3"><div class="cb"></div><span>Mix & master</span></li>
+          <li data-id="ll4"><div class="cb"></div><span>Distribute / release</span></li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="dot blue"></div> JT Reff</div>
+        <div class="bw"><div class="bm"><span class="bl">Completion</span><span class="bp" id="bp-jtreff">0%</span></div><div class="bt click" data-bar="jtreff"><div class="bf blue" id="bf-jtreff" style="width:0%"></div></div></div>
+        <ul class="cl" id="jtreff-cl">
+          <li data-id="jt1"><div class="cb"></div><span>Finalize arrangement</span></li>
+          <li data-id="jt2"><div class="cb"></div><span>Record final vocals / refs</span></li>
+          <li data-id="jt3"><div class="cb"></div><span>Mix & master</span></li>
+          <li data-id="jt4"><div class="cb"></div><span>Deliver to JT / get feedback</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
 </div>
 
-<hr/>
+<!-- ═══════════════════════════════════════════════════ FAMILY ═══ -->
+<div class="page" id="page-family">
+  <div class="page-header"><div><h2>FAMILY <span>& RELOCATION</span></h2></div><div class="date-chip"><strong id="family-date"></strong>Present Father</div></div>
 
-<!-- FINANCE -->
-<div class="section">
-  <div class="sl"><span>Finance — Debt Elimination</span></div>
-  <div class="card" style="margin-bottom:16px">
-    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;margin-bottom:16px">
-      <div><div class="sl2">Total Remaining Debt</div><div class="sv" style="font-size:2rem">$<span id="total-debt-display">42,608</span></div></div>
-      <div style="text-align:right"><div class="sl2">Total Paid Off</div><div class="sv gold" style="font-size:2rem">$<span id="total-paid-display">0</span></div></div>
-      <div style="text-align:right"><div class="sl2">Credit Score</div><div class="sv gold" style="font-size:2rem" id="credit-score-display">650</div></div>
-    </div>
-    <div class="bw" style="margin-bottom:0">
-      <div class="bm"><span class="bl">Overall Debt Eliminated</span><span class="bp" id="bp-total-debt">0%</span></div>
-      <div class="bt" style="height:10px"><div class="bf green" id="bf-total-debt" style="width:0%;height:100%"></div></div>
-    </div>
-  </div>
-
-  <div class="sl" style="margin-top:20px"><span>Personal Accounts</span></div>
-  <div class="g3">
-    <div class="card"><div class="ct"><div class="dot red"></div> Capital One</div><div class="sb"><div class="sl2">Starting</div><div class="sv">$6,423</div><div class="ss">Min: $181 · Due: 28th</div></div><label class="fl">Current Balance ($)</label><input type="number" id="bal-cap1" placeholder="6423" min="0" max="6423"/><div class="bw" style="margin-top:10px;margin-bottom:0"><div class="bm"><span class="bl">Paid Off</span><span class="bp" id="bp-cap1">0%</span></div><div class="bt"><div class="bf green" id="bf-cap1" style="width:0%"></div></div></div></div>
-    <div class="card"><div class="ct"><div class="dot green"></div> Express</div><div class="sb"><div class="sl2">Balance</div><div class="sv green">$0</div><div class="ss">Min: $37 · Due: 28th</div></div><div class="sb" style="background:rgba(34,197,94,0.06);border-color:rgba(34,197,94,0.2)"><div class="sl2" style="color:var(--green)">✓ Paid Off</div><div class="sv green">CLEAR</div></div><div class="bw" style="margin-bottom:0"><div class="bm"><span class="bl">Paid Off</span><span class="bp">100%</span></div><div class="bt"><div class="bf green" style="width:100%"></div></div></div></div>
-    <div class="card"><div class="ct"><div class="dot red"></div> Best Buy</div><div class="sb"><div class="sl2">Starting</div><div class="sv">$1,999</div><div class="ss">Min: $291 · Due: 18th</div></div><label class="fl">Current Balance ($)</label><input type="number" id="bal-bestbuy" placeholder="1999" min="0" max="1999"/><div class="bw" style="margin-top:10px;margin-bottom:0"><div class="bm"><span class="bl">Paid Off</span><span class="bp" id="bp-bestbuy">0%</span></div><div class="bt"><div class="bf green" id="bf-bestbuy" style="width:0%"></div></div></div></div>
-    <div class="card"><div class="ct"><div class="dot green"></div> Macy's</div><div class="sb"><div class="sl2">Balance</div><div class="sv green">$0</div><div class="ss">Min: $50 · Due: 13th</div></div><div class="sb" style="background:rgba(34,197,94,0.06);border-color:rgba(34,197,94,0.2)"><div class="sl2" style="color:var(--green)">✓ Paid Off</div><div class="sv green">CLEAR</div></div><div class="bw" style="margin-bottom:0"><div class="bm"><span class="bl">Paid Off</span><span class="bp">100%</span></div><div class="bt"><div class="bf green" style="width:100%"></div></div></div></div>
-    <div class="card"><div class="ct"><div class="dot red"></div> Chase (Personal)</div><div class="sb"><div class="sl2">Starting</div><div class="sv">$18,600</div><div class="ss">Min: $535 · Due: 2nd</div></div><label class="fl">Current Balance ($)</label><input type="number" id="bal-chase" placeholder="18600" min="0" max="18600"/><div class="bw" style="margin-top:10px;margin-bottom:0"><div class="bm"><span class="bl">Paid Off</span><span class="bp" id="bp-chase">0%</span></div><div class="bt"><div class="bf green" id="bf-chase" style="width:0%"></div></div></div></div>
-    <div class="card"><div class="ct"><div class="dot red"></div> Citi</div><div class="sb"><div class="sl2">Starting</div><div class="sv">$4,586</div><div class="ss">Min: $45 · Due: 27th</div></div><label class="fl">Current Balance ($)</label><input type="number" id="bal-citi" placeholder="4586" min="0" max="4586"/><div class="bw" style="margin-top:10px;margin-bottom:0"><div class="bm"><span class="bl">Paid Off</span><span class="bp" id="bp-citi">0%</span></div><div class="bt"><div class="bf green" id="bf-citi" style="width:0%"></div></div></div></div>
-  </div>
-
-  <div class="sl" style="margin-top:24px"><span>Business Account</span></div>
-  <div style="max-width:380px">
-    <div class="card"><div class="ct"><div class="dot blue"></div> Chase Business</div><div class="sb"><div class="sl2">Starting</div><div class="sv">$11,000</div><div class="ss">Min: $373 · Due: 5th</div></div><label class="fl">Current Balance ($)</label><input type="number" id="bal-biz" placeholder="11000" min="0" max="11000"/><div class="bw" style="margin-top:10px;margin-bottom:0"><div class="bm"><span class="bl">Paid Off</span><span class="bp" id="bp-biz">0%</span></div><div class="bt"><div class="bf blue" id="bf-biz" style="width:0%"></div></div></div></div>
-  </div>
-
-  <div style="margin-top:20px;max-width:380px">
-    <div class="card"><div class="ct"><div class="dot"></div> Credit Score</div><label class="fl">Current Score</label><input type="number" id="credit-score" placeholder="650" min="300" max="850"/></div>
-  </div>
-</div>
-
-<hr/>
-
-<!-- FAMILY -->
-<div class="section">
-  <div class="sl"><span>Family · Milestones & Priorities</span></div>
-  <div class="g2">
+  <div class="g2 section">
     <div class="card">
-      <div class="ct"><div class="dot"></div> Daily Priorities</div>
+      <div class="card-title"><div class="dot"></div> Daily Priorities</div>
       <ul class="cl" id="family-cl">
         <li data-id="fam1"><div class="cb"></div><span>Quality 1-on-1 time with Adrian today</span></li>
         <li data-id="fam2"><div class="cb"></div><span>Support wife through postpartum this week</span></li>
@@ -401,19 +611,18 @@ hr{border:none;border-top:1px solid var(--border);margin:32px 0}
       </ul>
     </div>
     <div class="card">
-      <div class="ct"><div class="dot gold"></div> Adrian's Milestones</div>
-      <ul class="cl" id="milestones-cl">
-        <li data-id="ms1"><div class="cb"></div><span>Adrian's First Haircut 💈</span></li>
-        <li data-id="ms2"><div class="cb"></div><span>Adrian's Photoshoot 📸</span></li>
-        <li data-id="ms3"><div class="cb"></div><span>Part-time care arrangement locked in 🔒</span></li>
-      </ul>
+      <div class="card-title"><div class="dot green"></div> Relocation Savings</div>
+      <div class="sb"><div class="sl2">Goal</div><div class="sv green">$10,000</div><div class="ss">Before the move</div></div>
+      <label class="fl">Current Savings ($)</label>
+      <input type="number" id="reloc-savings" placeholder="0" min="0" max="50000"/>
+      <div class="bw" style="margin-top:10px;margin-bottom:0"><div class="bm"><span class="bl">Toward $10k</span><span class="bp" id="bp-reloc-savings">0%</span></div><div class="bt"><div class="bf green" id="bf-reloc-savings" style="width:0%"></div></div></div>
     </div>
   </div>
 
-  <div class="sl" style="margin-top:24px"><span>Relocation Planning · ~18 Months</span></div>
-  <div class="g2">
+  <div class="section">
+    <div class="sl"><span>Relocation Planning · ~18 Months</span></div>
     <div class="card">
-      <div class="ct"><div class="dot"></div> Relocation Checklist</div>
+      <div class="card-title"><div class="dot"></div> City Research Checklist</div>
       <ul class="cl" id="reloc-cl">
         <li data-id="r1"><div class="cb"></div><span>Research Miami COL vs 1811 salary + locality pay</span></li>
         <li data-id="r2"><div class="cb"></div><span>Research Orlando COL vs 1811 salary + locality pay</span></li>
@@ -423,43 +632,41 @@ hr{border:none;border-top:1px solid var(--border);margin:32px 0}
         <li data-id="r6"><div class="cb"></div><span>Research relocation incentives on USAJobs postings</span></li>
       </ul>
     </div>
-    <div class="card">
-      <div class="ct"><div class="dot green"></div> Relocation Savings</div>
-      <div class="sb"><div class="sl2">Savings Goal</div><div class="sv green">$10,000</div><div class="ss">Target before move</div></div>
-      <label class="fl">Current Relocation Savings ($)</label>
-      <input type="number" id="reloc-savings" placeholder="0" min="0" max="50000"/>
-      <div class="bw" style="margin-top:12px;margin-bottom:0">
-        <div class="bm"><span class="bl">Toward $10k goal</span><span class="bp" id="bp-reloc-savings">0%</span></div>
-        <div class="bt"><div class="bf green" id="bf-reloc-savings" style="width:0%"></div></div>
-      </div>
-    </div>
   </div>
 </div>
 
-<hr/>
-
-<!-- DAILY TO-DO -->
-<div class="section">
-  <div class="sl"><span>Daily To-Do — Max 5 Tasks</span></div>
-  <div class="card">
-    <div class="ct"><div class="dot orange"></div> Today's Tasks</div>
-    <p style="font-size:0.8rem;color:var(--muted);margin-bottom:16px;line-height:1.5">5 tasks max. Keep it focused — if it's not on here it doesn't exist today.</p>
-    <div id="todo-list"></div>
-    <button id="add-todo-btn" onclick="addTodo()" style="margin-top:12px;background:var(--subtle);border:1px dashed var(--border);border-radius:8px;color:var(--muted);font-family:'DM Mono',monospace;font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;padding:10px;width:100%;cursor:pointer;transition:all 0.2s">+ Add Task</button>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
-      <span style="font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--muted);letter-spacing:0.08em"><span id="todo-done-count">0</span> / <span id="todo-total-count">0</span> DONE TODAY</span>
-      <button onclick="clearDoneTodos()" style="background:none;border:none;color:var(--muted);font-family:'DM Mono',monospace;font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;padding:4px 8px;border-radius:4px;transition:color 0.2s">Clear Completed</button>
-    </div>
+<!-- ═══════════════════════════════════════════════════ HISTORY ═══ -->
+<div class="page" id="page-history">
+  <div class="page-header"><div><h2>PROGRESS <span>HISTORY</span></h2></div><div class="date-chip"><strong id="history-date"></strong>All Entries</div></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+    <p style="font-size:0.82rem;color:var(--muted);line-height:1.5">Every time you tap <strong style="color:var(--gold)">Log Today's Progress</strong> on the Home page, a snapshot is saved here.</p>
+    <button onclick="clearHistory()" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-family:'DM Mono',monospace;font-size:0.65rem;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;padding:8px 14px">Clear All History</button>
   </div>
+  <div id="history-container"></div>
 </div>
 
-<button class="save-btn" onclick="saveAll()">SAVE PROGRESS</button>
-<div class="save-msg" id="save-msg">Progress saved ✓</div>
+</div><!-- end wrap -->
 
-</div>
 <script>
-// ── Interview Questions ────────────────────────────────────────────────────────
-const QUESTIONS=[
+// ─── Page Navigation ──────────────────────────────────────────────────────────
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => {
+    if (b.textContent.toLowerCase().includes(id) || (id === 'home' && b.textContent.includes('🏠'))) b.classList.add('active');
+  });
+  if (id === 'history') renderHistory();
+  // Update page dates
+  const d = new Date().toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'});
+  ['debt-date','fit-date','career-date','music-date','family-date','history-date'].forEach(did => {
+    const el = document.getElementById(did); if (el) el.textContent = d;
+  });
+  window.scrollTo(0, 0);
+}
+
+// ─── Interview Questions ──────────────────────────────────────────────────────
+const QUESTIONS = [
   ["Describe a time you had to make a critical decision under pressure with limited information. What was the situation, what did you decide, and what was the outcome?","Tell me about a time you identified something unethical or improper happening around you. What did you do and why?"],
   ["Describe a situation where you had to work closely with someone from another agency or department. How did you manage the relationship and what was the result?","Give me an example of a time you had to adapt quickly when a plan changed unexpectedly in the field. How did you handle it?"],
   ["Tell me about the most complex report or documentation you've had to produce. What made it difficult and how did you ensure accuracy?","Describe a time you had to enforce a rule or policy that you personally disagreed with. How did you handle it?"],
@@ -470,264 +677,448 @@ const QUESTIONS=[
   ["Give me an example of a time you had to persuade others to follow a course of action they were initially resistant to.","Tell me about a time your integrity was tested on the job. What was the situation and how did you respond?"],
 ];
 
-function getWeekNum(){
-  const anchor=new Date('2026-03-20');
-  const diff=Math.floor((new Date()-anchor)/(1000*60*60*24));
-  return Math.max(0,Math.floor(diff/7));
+function getWeekNum() {
+  const anchor = new Date('2026-03-20');
+  return Math.max(0, Math.floor((new Date() - anchor) / (1000*60*60*24*7)));
 }
 
-function renderIQ(){
-  const wi=getWeekNum()%QUESTIONS.length;
-  const wn=getWeekNum()+1;
-  const[q1,q2]=QUESTIONS[wi];
-  document.getElementById('week-badge').textContent=`Week ${wn}`;
-  document.getElementById('interview-questions').innerHTML=`
-    <div class="iq-card"><div class="iq-num">Question 1 of 2</div><div class="iq-q">"${q1}"</div><label class="fl">Your Answer (paste here for feedback)</label><textarea id="iq-ans-1" placeholder="Write your STAR-format answer here..."></textarea></div>
-    <div class="iq-card"><div class="iq-num">Question 2 of 2</div><div class="iq-q">"${q2}"</div><label class="fl">Your Answer (paste here for feedback)</label><textarea id="iq-ans-2" placeholder="Write your STAR-format answer here..."></textarea></div>`;
-  document.getElementById('iq-ans-1')?.addEventListener('input',autoSave);
-  document.getElementById('iq-ans-2')?.addEventListener('input',autoSave);
+function renderIQ() {
+  const wi = getWeekNum() % QUESTIONS.length;
+  const [q1, q2] = QUESTIONS[wi];
+  document.getElementById('week-badge').textContent = `Week ${getWeekNum() + 1}`;
+  document.getElementById('interview-questions').innerHTML = `
+    <div class="iq-card"><div class="iq-num">Question 1 of 2</div><div class="iq-q">"${q1}"</div><label class="fl">Your Answer</label><textarea id="iq-ans-1" placeholder="STAR format: Situation, Task, Action, Result..."></textarea></div>
+    <div class="iq-card"><div class="iq-num">Question 2 of 2</div><div class="iq-q">"${q2}"</div><label class="fl">Your Answer</label><textarea id="iq-ans-2" placeholder="STAR format: Situation, Task, Action, Result..."></textarea></div>`;
+  document.getElementById('iq-ans-1')?.addEventListener('input', autoSave);
+  document.getElementById('iq-ans-2')?.addEventListener('input', autoSave);
 }
 
-// ── Utilities ─────────────────────────────────────────────────────────────────
-function clamp(v,a,b){return Math.min(b,Math.max(a,v))}
-function setBar(fid,pid,pct){pct=clamp(pct,0,100);const f=document.getElementById(fid),p=document.getElementById(pid);if(f)f.style.width=pct+'%';if(p)p.textContent=Math.round(pct)+'%'}
-function setRing(rid,pid,pct){pct=clamp(pct,0,100);const r=document.getElementById(rid),l=document.getElementById(pid);if(r)r.style.strokeDashoffset=263.9-(263.9*pct/100);if(l)l.textContent=Math.round(pct)+'%'}
-function getBarPct(fid){const el=document.getElementById(fid);return el?parseFloat(el.style.width)||0:0}
-function clPct(id){const l=document.getElementById(id);if(!l)return 0;const a=l.querySelectorAll('li'),d=l.querySelectorAll('li.done');return a.length?(d.length/a.length)*100:0}
+// ─── Utilities ────────────────────────────────────────────────────────────────
+const clamp = (v,a,b) => Math.min(b, Math.max(a, v));
+function setBar(fid, pid, pct) {
+  pct = clamp(pct, 0, 100);
+  const f = document.getElementById(fid), p = document.getElementById(pid);
+  if (f) f.style.width = pct + '%';
+  if (p) p.textContent = Math.round(pct) + '%';
+}
+function setRing(rid, pid, pct) {
+  pct = clamp(pct, 0, 100);
+  const r = document.getElementById(rid), l = document.getElementById(pid);
+  if (r) r.style.strokeDashoffset = 263.9 - (263.9 * pct / 100);
+  if (l) l.textContent = Math.round(pct) + '%';
+}
+function getBarPct(fid) { const el = document.getElementById(fid); return el ? parseFloat(el.style.width)||0 : 0; }
+function clPct(id) { const l = document.getElementById(id); if(!l) return 0; const a = l.querySelectorAll('li'), d = l.querySelectorAll('li.done'); return a.length ? (d.length/a.length)*100 : 0; }
 
-document.getElementById('today-date').textContent=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+// ─── Date ─────────────────────────────────────────────────────────────────────
+const TODAY_STR = new Date().toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'});
+document.getElementById('today-date').textContent = TODAY_STR;
 
-// ── Clickable bars ─────────────────────────────────────────────────────────────
-document.querySelectorAll('.bt.click').forEach(track=>{
-  track.addEventListener('click',e=>{
-    const rect=track.getBoundingClientRect();
-    const pct=Math.round(clamp(((e.clientX-rect.left)/rect.width)*100,0,100));
-    const k=track.dataset.bar;
-    const f=document.getElementById('bf-'+k),p=document.getElementById('bp-'+k);
-    if(f)f.style.width=pct+'%';if(p)p.textContent=pct+'%';
-    computeAllRings();autoSave();
+// ─── Clickable bars ───────────────────────────────────────────────────────────
+document.querySelectorAll('.bt.click').forEach(track => {
+  track.addEventListener('click', e => {
+    const rect = track.getBoundingClientRect();
+    const pct = Math.round(clamp(((e.clientX - rect.left) / rect.width) * 100, 0, 100));
+    const k = track.dataset.bar;
+    const f = document.getElementById('bf-' + k), p = document.getElementById('bp-' + k);
+    if (f) f.style.width = pct + '%';
+    if (p) p.textContent = pct + '%';
+    computeAllRings(); autoSave();
   });
 });
 
-// ── Checklists ─────────────────────────────────────────────────────────────────
-document.querySelectorAll('.cl li').forEach(li=>{
-  li.addEventListener('click',()=>{li.classList.toggle('done');computeAllRings();autoSave();});
+// ─── Checklists ───────────────────────────────────────────────────────────────
+document.querySelectorAll('.cl li').forEach(li => {
+  li.addEventListener('click', () => { li.classList.toggle('done'); computeAllRings(); autoSave(); });
 });
 
-// ── Inputs ────────────────────────────────────────────────────────────────────
-function ni(id,fn){document.getElementById(id)?.addEventListener('input',function(){fn(this.value);})}
+// ─── Number inputs ────────────────────────────────────────────────────────────
+function ni(id, fn) { document.getElementById(id)?.addEventListener('input', function() { fn(this.value); }); }
 
-ni('current-weight',v=>{setBar('bf-weight','bp-weight',clamp(((257-parseFloat(v))/45)*100,0,100));autoCalcFFM();computeAllRings();autoSave();});
-ni('bf-pct',v=>{setBar('bf-bfpct-bar','bp-bfpct',clamp(((28-parseFloat(v))/13)*100,0,100));autoCalcFFM();computeAllRings();autoSave();});
-ni('ffm',()=>autoSave());
-document.getElementById('ffm')?.addEventListener('focus',function(){this._manual=true;});
+ni('current-weight', v => {
+  const pct = clamp(((257 - parseFloat(v)) / 45) * 100, 0, 100);
+  setBar('bf-weight','bp-weight', pct);
+  setBar('home-bf-weight','home-weight-pct', pct);
+  const wd = document.getElementById('home-weight-display');
+  if (wd) wd.textContent = v ? `${v} lbs` : '257 lbs';
+  autoCalcFFM(); computeAllRings(); autoSave();
+});
+ni('bf-pct', v => { setBar('bf-bfpct-bar','bp-bfpct', clamp(((28 - parseFloat(v))/13)*100,0,100)); autoCalcFFM(); computeAllRings(); autoSave(); });
+ni('ffm', () => autoSave());
+document.getElementById('ffm')?.addEventListener('focus', function() { this._manual = true; });
 
-function autoCalcFFM(){
-  const w=parseFloat(document.getElementById('current-weight')?.value);
-  const bf=parseFloat(document.getElementById('bf-pct')?.value);
-  const inp=document.getElementById('ffm');
-  const note=document.getElementById('ffm-note');
-  if(w&&bf&&!isNaN(w)&&!isNaN(bf)&&inp&&!inp._manual){
-    const ffm=(w*(1-bf/100)).toFixed(1);
-    inp.value=ffm;
-    if(note)note.textContent=`Auto-calculated: ${ffm} lbs fat-free mass`;
+function autoCalcFFM() {
+  const w = parseFloat(document.getElementById('current-weight')?.value);
+  const bf = parseFloat(document.getElementById('bf-pct')?.value);
+  const inp = document.getElementById('ffm'), note = document.getElementById('ffm-note');
+  if (w && bf && !isNaN(w) && !isNaN(bf) && inp && !inp._manual) {
+    const ffm = (w * (1 - bf/100)).toFixed(1);
+    inp.value = ffm;
+    if (note) note.textContent = `Auto-calculated: ${ffm} lbs fat-free mass`;
   }
 }
 
-ni('steps-count',v=>{
-  const pct=clamp((parseFloat(v)/8000)*100,0,100);
-  const f=document.getElementById('bf-steps'),l=document.getElementById('bp-steps');
-  if(f)f.style.width=pct+'%';if(l)l.textContent=(parseFloat(v)||0).toLocaleString();
-  computeAllRings();autoSave();
+ni('steps-count', v => {
+  const pct = clamp((parseFloat(v)/8000)*100,0,100);
+  const f = document.getElementById('bf-steps'), l = document.getElementById('bp-steps');
+  if (f) f.style.width = pct+'%'; if (l) l.textContent = (parseFloat(v)||0).toLocaleString();
+  computeAllRings(); autoSave();
+});
+ni('pushup-count', v => {
+  setBar('bf-pushup','bp-pushup', clamp((parseFloat(v)/70)*100,0,100));
+  const d = document.getElementById('bp-pushup'); if (d) d.textContent = Math.round(parseFloat(v)||0);
+  computeAllRings(); autoSave();
+});
+ni('music-revenue', v => {
+  const pct = clamp((parseFloat(v)/1000)*100,0,100);
+  setBar('bf-rev','bp-rev', pct);
+  setBar('home-bf-rev', null, pct);
+  const hd = document.getElementById('home-revenue-display'); if (hd) hd.textContent = parseFloat(v)||0;
+  computeAllRings(); autoSave();
+});
+ni('credit-score', v => {
+  const d1 = document.getElementById('credit-score-display'), d2 = document.getElementById('credit-score-display2');
+  if (d1 && v) d1.textContent = v; if (d2 && v) d2.textContent = v;
+  autoSave();
+});
+ni('reloc-savings', v => { setBar('bf-reloc-savings','bp-reloc-savings', clamp((parseFloat(v)/10000)*100,0,100)); autoSave(); });
+document.getElementById('career-notes')?.addEventListener('input', autoSave);
+
+// ─── PRs ─────────────────────────────────────────────────────────────────────
+const PR_KEYS = ['chest','shoulder','squat','deadlift','stair-speed','stair-time'];
+const PR_UNITS = {chest:'lbs',shoulder:'lbs',squat:'lbs',deadlift:'lbs','stair-speed':'lvl','stair-time':'min'};
+PR_KEYS.forEach(k => {
+  ni('pr-'+k, v => { const d = document.getElementById('prd-'+k); if(d) d.textContent = v?`${v} ${PR_UNITS[k]}`:`— ${PR_UNITS[k]}`; autoSave(); });
 });
 
-ni('pushup-count',v=>{
-  setBar('bf-pushup','bp-pushup',clamp((parseFloat(v)/70)*100,0,100));
-  const d=document.getElementById('bp-pushup');if(d)d.textContent=Math.round(parseFloat(v)||0);
-  computeAllRings();autoSave();
-});
+// ─── Debt ─────────────────────────────────────────────────────────────────────
+const DEBTS = [{id:'cap1',start:6423},{id:'bestbuy',start:1999},{id:'chase',start:18600},{id:'citi',start:4586},{id:'biz',start:11000}];
+const TOTAL_START = 42608;
 
-ni('music-revenue',v=>{setBar('bf-rev','bp-rev',clamp((parseFloat(v)/1000)*100,0,100));computeAllRings();autoSave();});
-ni('credit-score',v=>{const d=document.getElementById('credit-score-display');if(d&&v)d.textContent=v;autoSave();});
-ni('reloc-savings',v=>{setBar('bf-reloc-savings','bp-reloc-savings',clamp((parseFloat(v)/10000)*100,0,100));autoSave();});
-
-// ── PRs ───────────────────────────────────────────────────────────────────────
-const PR_KEYS=['chest','shoulder','squat','deadlift','stair-speed','stair-time'];
-const PR_UNITS={chest:'lbs',shoulder:'lbs',squat:'lbs',deadlift:'lbs','stair-speed':'lvl','stair-time':'min'};
-PR_KEYS.forEach(k=>{
-  ni('pr-'+k,v=>{
-    const d=document.getElementById('prd-'+k);
-    if(d)d.textContent=v?`${v} ${PR_UNITS[k]}`:`— ${PR_UNITS[k]}`;
-    autoSave();
-  });
-});
-
-// ── Debt ──────────────────────────────────────────────────────────────────────
-const DEBTS=[{id:'cap1',start:6423},{id:'bestbuy',start:1999},{id:'chase',start:18600},{id:'citi',start:4586},{id:'biz',start:11000}];
-const TOTAL_START=42608;
-
-function updDebt(id,start){const v=parseFloat(document.getElementById('bal-'+id)?.value);const cur=isNaN(v)?start:v;setBar('bf-'+id,'bp-'+id,clamp(((start-cur)/start)*100,0,100));}
-
-function calcDebt(){
-  let rem=0;
-  DEBTS.forEach(({id,start})=>{const v=parseFloat(document.getElementById('bal-'+id)?.value);rem+=isNaN(v)?start:Math.max(0,v);});
-  const paid=TOTAL_START-rem;const pct=clamp((paid/TOTAL_START)*100,0,100);
-  document.getElementById('total-debt-display').textContent=rem.toLocaleString('en-US',{maximumFractionDigits:0});
-  document.getElementById('total-paid-display').textContent=Math.max(0,paid).toLocaleString('en-US',{maximumFractionDigits:0});
-  setBar('bf-total-debt','bp-total-debt',pct);setRing('ring-finance','rpct-finance',pct);
+function updDebt(id, start) {
+  const v = parseFloat(document.getElementById('bal-'+id)?.value);
+  setBar('bf-'+id,'bp-'+id, clamp(((start-(isNaN(v)?start:v))/start)*100,0,100));
 }
 
-DEBTS.forEach(({id,start})=>{ni('bal-'+id,()=>{updDebt(id,start);calcDebt();autoSave();});});
+function calcDebt() {
+  let rem = 0;
+  DEBTS.forEach(({id,start}) => { const v = parseFloat(document.getElementById('bal-'+id)?.value); rem += isNaN(v)?start:Math.max(0,v); });
+  const paid = TOTAL_START - rem;
+  const pct = clamp((paid/TOTAL_START)*100,0,100);
+  document.getElementById('total-debt-display').textContent = rem.toLocaleString('en-US',{maximumFractionDigits:0});
+  document.getElementById('total-paid-display').textContent = Math.max(0,paid).toLocaleString('en-US',{maximumFractionDigits:0});
+  setBar('bf-total-debt','bp-total-debt',pct);
+  // Home snapshot
+  const hdr = document.getElementById('home-debt-remaining'); if(hdr) hdr.textContent = rem.toLocaleString('en-US',{maximumFractionDigits:0});
+  const hdp = document.getElementById('home-debt-pct'); if(hdp) hdp.textContent = Math.round(pct)+'%';
+  setBar('home-bf-debt',null,pct);
+  setRing('ring-finance','rpct-finance',pct);
+}
 
-// ── Water ─────────────────────────────────────────────────────────────────────
-let waterCount=0;
-function renderWater(){
-  const c=document.getElementById('water-btns');if(!c)return;c.innerHTML='';
-  for(let i=1;i<=8;i++){
-    const btn=document.createElement('button');btn.textContent='💧';
-    const on=i<=waterCount;
-    btn.style.cssText=`width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:1rem;transition:all 0.15s;border:1.5px solid ${on?'var(--blue)':'var(--border)'};background:${on?'rgba(59,130,246,0.25)':'var(--subtle)'};opacity:${on?1:0.4}`;
+DEBTS.forEach(({id,start}) => { ni('bal-'+id, () => { updDebt(id,start); calcDebt(); autoSave(); }); });
+
+// ─── Water ────────────────────────────────────────────────────────────────────
+let waterCount = 0;
+function renderWater() {
+  const c = document.getElementById('water-btns'); if(!c) return; c.innerHTML='';
+  for (let i=1;i<=8;i++) {
+    const btn = document.createElement('button'); btn.textContent='💧';
+    const on = i<=waterCount;
+    btn.style.cssText=`width:32px;height:32px;border-radius:7px;cursor:pointer;font-size:0.95rem;transition:all 0.15s;border:1.5px solid ${on?'var(--blue)':'var(--border)'};background:${on?'rgba(59,130,246,0.25)':'var(--subtle)'};opacity:${on?1:0.4}`;
     btn.addEventListener('click',()=>{waterCount=waterCount===i?i-1:i;renderWater();updWater();computeAllRings();autoSave();});
     c.appendChild(btn);
   }
 }
-function updWater(){const pct=(waterCount/8)*100;const f=document.getElementById('bf-water'),l=document.getElementById('bp-water');if(f)f.style.width=pct+'%';if(l)l.textContent=`${waterCount} / 8`;}
+function updWater() {
+  const pct=(waterCount/8)*100;
+  const f=document.getElementById('bf-water'),l=document.getElementById('bp-water');
+  if(f)f.style.width=pct+'%';if(l)l.textContent=`${waterCount} / 8`;
+}
 renderWater();
 
-// ── Ring calculations ──────────────────────────────────────────────────────────
-function computeAllRings(){
-  const trainAvg=(getBarPct('bf-nw3c')+getBarPct('bf-fema')+getBarPct('bf-acams')+getBarPct('bf-taskforce'))/4;
+// ─── Ring calculations ────────────────────────────────────────────────────────
+function computeAllRings() {
+  const trainAvg = (getBarPct('bf-nw3c')+getBarPct('bf-fema')+getBarPct('bf-acams')+getBarPct('bf-taskforce'))/4;
   setRing('ring-career','rpct-career',(trainAvg*0.5)+(clPct('career-cl')*0.5));
-  const wPct=getBarPct('bf-weight'),bfP=getBarPct('bf-bfpct-bar'),stP=getBarPct('bf-steps'),wtrP=(waterCount/8)*100,ppP=getBarPct('bf-pushup');
-  setRing('ring-fitness','rpct-fitness',(wPct*0.25)+(bfP*0.15)+(stP*0.15)+(wtrP*0.1)+(ppP*0.1)+(clPct('fitness-cl')*0.25));
-  setRing('ring-music','rpct-music',(getBarPct('bf-rev')*0.6)+(clPct('music-cl')*0.4));
+  const wP=getBarPct('bf-weight'),bfP=getBarPct('bf-bfpct-bar'),stP=getBarPct('bf-steps'),wtrP=(waterCount/8)*100,ppP=getBarPct('bf-pushup');
+  setRing('ring-fitness','rpct-fitness',(wP*0.25)+(bfP*0.15)+(stP*0.15)+(wtrP*0.1)+(ppP*0.1)+(clPct('fitness-cl')*0.25));
+  const musicProj = (getBarPct('bf-studio-upgrade')+getBarPct('bf-llorar')+getBarPct('bf-jtreff'))/3;
+  setRing('ring-music','rpct-music',(getBarPct('bf-rev')*0.5)+(clPct('music-cl')*0.3)+(musicProj*0.2));
+  setRing('ring-family','rpct-family',(clPct('family-cl')*0.6)+(clPct('reloc-cl')*0.4));
+  calcDebt();
 }
 
-// ── Save / Load ───────────────────────────────────────────────────────────────
-function collectState(){
-  const checks={};
-  document.querySelectorAll('.cl li').forEach(li=>{if(li.dataset.id)checks[li.dataset.id]=li.classList.contains('done');});
-  const bars={};['nw3c','fema','acams','taskforce'].forEach(k=>{bars[k]=parseFloat(document.getElementById('bf-'+k)?.style.width)||0;});
-  const prs={};PR_KEYS.forEach(k=>{prs[k]=document.getElementById('pr-'+k)?.value||'';});
-  const debtBals={};DEBTS.forEach(({id})=>{debtBals[id]=document.getElementById('bal-'+id)?.value||'';});
-  return{
-    checks,bars,prs,debtBals,waterCount,
-    weight:document.getElementById('current-weight')?.value||'',
-    bfPct:document.getElementById('bf-pct')?.value||'',
-    ffm:document.getElementById('ffm')?.value||'',
-    steps:document.getElementById('steps-count')?.value||'',
-    pushup:document.getElementById('pushup-count')?.value||'',
+// ─── Budget ───────────────────────────────────────────────────────────────────
+let incomeRows = [{source:'Federal Salary (Net)', amount:'7000'}];
+let expenseRows = [
+  {category:'Rent/Mortgage', budgeted:'', actual:''},
+  {category:'Groceries', budgeted:'', actual:''},
+  {category:'Utilities', budgeted:'', actual:''},
+  {category:'Debt Minimums', budgeted:'1481', actual:'1481'},
+  {category:'Transportation', budgeted:'', actual:''},
+  {category:'Childcare', budgeted:'', actual:''},
+];
+
+function showBudgetTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.textContent.toLowerCase()===tab));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.id==='budget-'+tab));
+  if (tab==='summary') updateBudgetSummary();
+}
+
+function renderIncomeTable() {
+  const tbody = document.getElementById('income-tbody'); if(!tbody) return;
+  tbody.innerHTML = '';
+  incomeRows.forEach((row,i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td><input type="text" value="${row.source}" placeholder="Income source" oninput="incomeRows[${i}].source=this.value;autoSave()"/></td>
+      <td><input type="number" value="${row.amount}" placeholder="0" oninput="incomeRows[${i}].amount=this.value;updateIncomeTotal();autoSave()"/></td>
+      <td><button class="del-row-btn" onclick="delIncomeRow(${i})">✕</button></td>`;
+    tbody.appendChild(tr);
+  });
+  updateIncomeTotal();
+}
+
+function updateIncomeTotal() {
+  const total = incomeRows.reduce((s,r)=>s+(parseFloat(r.amount)||0),0);
+  const el = document.getElementById('income-total'); if(el) el.textContent = total.toLocaleString();
+  updateBudgetSummary();
+}
+
+function addIncomeRow() { incomeRows.push({source:'',amount:''}); renderIncomeTable(); autoSave(); }
+function delIncomeRow(i) { incomeRows.splice(i,1); renderIncomeTable(); autoSave(); }
+
+function renderExpenseTable() {
+  const tbody = document.getElementById('expense-tbody'); if(!tbody) return;
+  tbody.innerHTML='';
+  expenseRows.forEach((row,i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td><input type="text" value="${row.category}" placeholder="Category" oninput="expenseRows[${i}].category=this.value;autoSave()"/></td>
+      <td><input type="number" value="${row.budgeted}" placeholder="0" oninput="expenseRows[${i}].budgeted=this.value;updateExpenseTotals();autoSave()"/></td>
+      <td><input type="number" value="${row.actual}" placeholder="0" oninput="expenseRows[${i}].actual=this.value;updateExpenseTotals();autoSave()"/></td>
+      <td><button class="del-row-btn" onclick="delExpenseRow(${i})">✕</button></td>`;
+    tbody.appendChild(tr);
+  });
+  updateExpenseTotals();
+}
+
+function updateExpenseTotals() {
+  const budgeted = expenseRows.reduce((s,r)=>s+(parseFloat(r.budgeted)||0),0);
+  const actual   = expenseRows.reduce((s,r)=>s+(parseFloat(r.actual)||0),0);
+  const eb = document.getElementById('expense-budgeted-total'), ea = document.getElementById('expense-actual-total');
+  if(eb) eb.textContent = budgeted.toLocaleString();
+  if(ea) ea.textContent = actual.toLocaleString();
+  updateBudgetSummary();
+}
+
+function addExpenseRow() { expenseRows.push({category:'',budgeted:'',actual:''}); renderExpenseTable(); autoSave(); }
+function delExpenseRow(i) { expenseRows.splice(i,1); renderExpenseTable(); autoSave(); }
+
+function updateBudgetSummary() {
+  const income  = incomeRows.reduce((s,r)=>s+(parseFloat(r.amount)||0),0);
+  const actual  = expenseRows.reduce((s,r)=>s+(parseFloat(r.actual)||0),0);
+  const leftover = income - actual;
+  const pct = income > 0 ? clamp((actual/income)*100,0,100) : 0;
+  const si = document.getElementById('sum-income'), se = document.getElementById('sum-expenses');
+  const sl = document.getElementById('sum-leftover'), adv = document.getElementById('budget-advice');
+  if(si) si.textContent = income.toLocaleString();
+  if(se) se.textContent = actual.toLocaleString();
+  if(sl) sl.textContent = Math.max(0,leftover).toLocaleString();
+  setBar('bf-budget','bp-budget',pct);
+  if(adv) {
+    if(income===0) { adv.textContent='Enter your income and expenses to see your monthly recommendation.'; return; }
+    if(leftover>0) adv.textContent=`You have $${leftover.toLocaleString()} left after expenses. Put every extra dollar toward Best Buy first, then Citi, then Capital One — in that order.`;
+    else adv.textContent=`Your expenses exceed income by $${Math.abs(leftover).toLocaleString()}. Review spending categories and cut where possible to free up cash for debt.`;
+  }
+}
+
+function addExpenseRow() { expenseRows.push({category:'',budgeted:'',actual:''}); renderExpenseTable(); autoSave(); }
+function delExpenseRow(i) { expenseRows.splice(i,1); renderExpenseTable(); autoSave(); }
+
+// ─── To-Do ────────────────────────────────────────────────────────────────────
+let todos = [];
+function renderTodos() {
+  const list = document.getElementById('todo-list'), btn = document.getElementById('add-todo-btn');
+  if(!list) return; list.innerHTML='';
+  todos.forEach((t,i) => {
+    const row = document.createElement('div');
+    row.className = 'todo-item'+(t.done?' done':'');
+    row.innerHTML = `<div class="todo-cb" onclick="toggleTodo(${i})"></div>
+      <input class="todo-input" type="text" placeholder="What needs to get done..." value="${t.text.replace(/"/g,'&quot;')}"
+        oninput="todos[${i}].text=this.value;autoSave()" onkeydown="if(event.key==='Enter')addTodo()"/>
+      <button class="todo-del" onclick="deleteTodo(${i})">✕</button>`;
+    list.appendChild(row);
+  });
+  const done=todos.filter(t=>t.done).length;
+  const td=document.getElementById('todo-done'),tt=document.getElementById('todo-total');
+  if(td)td.textContent=done;if(tt)tt.textContent=todos.length;
+  if(btn)btn.style.display=todos.length>=5?'none':'block';
+}
+function addTodo(){if(todos.length>=5)return;todos.push({text:'',done:false});renderTodos();const ins=document.querySelectorAll('.todo-input');if(ins.length)ins[ins.length-1].focus();autoSave();}
+function toggleTodo(i){todos[i].done=!todos[i].done;renderTodos();autoSave();}
+function deleteTodo(i){todos.splice(i,1);renderTodos();autoSave();}
+function clearDoneTodos(){todos=todos.filter(t=>!t.done);renderTodos();autoSave();}
+renderTodos();
+
+// ─── History ──────────────────────────────────────────────────────────────────
+let history = [];
+
+function logToday() {
+  const snap = {
+    date: new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'}),
+    timestamp: Date.now(),
+    weight: document.getElementById('current-weight')?.value || '—',
+    bfPct: document.getElementById('bf-pct')?.value || '—',
+    steps: document.getElementById('steps-count')?.value || '—',
+    water: waterCount,
+    pushup: document.getElementById('pushup-count')?.value || '—',
+    revenue: document.getElementById('music-revenue')?.value || '—',
+    debtRemaining: document.getElementById('total-debt-display')?.textContent || '—',
+    creditScore: document.getElementById('credit-score')?.value || '—',
+    relocSavings: document.getElementById('reloc-savings')?.value || '—',
+    fitnessPct: Math.round(parseFloat(document.getElementById('rpct-fitness')?.textContent)||0),
+    careerPct: Math.round(parseFloat(document.getElementById('rpct-career')?.textContent)||0),
+    musicPct: Math.round(parseFloat(document.getElementById('rpct-music')?.textContent)||0),
+    financePct: Math.round(parseFloat(document.getElementById('rpct-finance')?.textContent)||0),
+    todos: todos.map(t=>({...t})),
+    fitnessChecks: Array.from(document.querySelectorAll('#fitness-cl li')).map(li=>({label:li.querySelector('span').textContent,done:li.classList.contains('done')})),
+  };
+  // Remove duplicate same-day entry
+  history = history.filter(h => h.date !== snap.date);
+  history.unshift(snap);
+  saveData();
+  showPage('history');
+  const btn = document.querySelector('.log-btn');
+  if(btn){const orig=btn.textContent;btn.textContent='✓ Logged!';btn.style.background='var(--green)';setTimeout(()=>{btn.textContent=orig;btn.style.background='';},2000);}
+}
+
+function renderHistory() {
+  const c = document.getElementById('history-container'); if(!c) return;
+  if(history.length===0){c.innerHTML='<div class="no-history">No entries yet — tap Log Today\'s Progress on the home page</div>';return;}
+  c.innerHTML='';
+  history.forEach((snap,i) => {
+    const el = document.createElement('div');
+    el.className='history-entry';
+    const doneTasks = snap.todos?.filter(t=>t.done).length||0;
+    const totalTasks = snap.todos?.length||0;
+    el.innerHTML=`
+      <div class="history-header" onclick="toggleHistory(${i})">
+        <div>
+          <div class="history-date">${snap.date}</div>
+          <div class="history-summary">Career ${snap.careerPct}% · Fitness ${snap.fitnessPct}% · Music ${snap.musicPct}% · Debt ${snap.financePct}%</div>
+        </div>
+        <span class="history-chevron" id="hchev-${i}">▼</span>
+      </div>
+      <div class="history-body" id="hbody-${i}">
+        <div class="history-grid">
+          <div class="history-stat"><div class="history-stat-label">Weight</div><div class="history-stat-val">${snap.weight} lbs</div></div>
+          <div class="history-stat"><div class="history-stat-label">Body Fat %</div><div class="history-stat-val">${snap.bfPct}%</div></div>
+          <div class="history-stat"><div class="history-stat-label">Steps</div><div class="history-stat-val">${parseFloat(snap.steps||0).toLocaleString()}</div></div>
+          <div class="history-stat"><div class="history-stat-label">Water</div><div class="history-stat-val">${snap.water} / 8</div></div>
+          <div class="history-stat"><div class="history-stat-label">Push-ups/min</div><div class="history-stat-val">${snap.pushup}</div></div>
+          <div class="history-stat"><div class="history-stat-label">Revenue</div><div class="history-stat-val">$${snap.revenue}</div></div>
+          <div class="history-stat"><div class="history-stat-label">Debt Remaining</div><div class="history-stat-val">$${snap.debtRemaining}</div></div>
+          <div class="history-stat"><div class="history-stat-label">Reloc Savings</div><div class="history-stat-val">$${snap.relocSavings||0}</div></div>
+          <div class="history-stat"><div class="history-stat-label">Credit Score</div><div class="history-stat-val">${snap.creditScore||'—'}</div></div>
+          <div class="history-stat"><div class="history-stat-label">Tasks Done</div><div class="history-stat-val">${doneTasks} / ${totalTasks}</div></div>
+        </div>
+        ${snap.todos?.length ? `<div class="history-tasks"><div style="font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin:12px 0 6px">Today's Tasks</div>${snap.todos.map(t=>`<div class="history-task ${t.done?'done':''}">• ${t.text||'(empty)'}</div>`).join('')}</div>` : ''}
+        ${snap.fitnessChecks?.length ? `<div class="history-tasks"><div style="font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin:12px 0 6px">Fitness Checklist</div>${snap.fitnessChecks.map(t=>`<div class="history-task ${t.done?'done':''}">• ${t.label}</div>`).join('')}</div>` : ''}
+      </div>`;
+    c.appendChild(el);
+  });
+}
+
+function toggleHistory(i) {
+  const body = document.getElementById('hbody-'+i), chev = document.getElementById('hchev-'+i);
+  if(body){body.classList.toggle('open');if(chev)chev.textContent=body.classList.contains('open')?'▲':'▼';}
+}
+
+function clearHistory() {
+  if(confirm('Clear all history entries?')){history=[];saveData();renderHistory();}
+}
+
+// ─── Save / Load ──────────────────────────────────────────────────────────────
+const STORAGE_KEY = 'life-tracker-v4';
+
+function collectState() {
+  const checks = {};
+  document.querySelectorAll('.cl li').forEach(li => { if(li.dataset.id) checks[li.dataset.id]=li.classList.contains('done'); });
+  const bars = {};
+  ['nw3c','fema','acams','taskforce','studio-upgrade','llorar','jtreff'].forEach(k => {
+    bars[k] = parseFloat(document.getElementById('bf-'+k)?.style.width)||0;
+  });
+  const prs = {}; PR_KEYS.forEach(k => { prs[k]=document.getElementById('pr-'+k)?.value||''; });
+  const debtBals = {}; DEBTS.forEach(({id})=>{ debtBals[id]=document.getElementById('bal-'+id)?.value||''; });
+  return {
+    checks, bars, prs, debtBals, waterCount, incomeRows, expenseRows, todos, history,
+    weight: document.getElementById('current-weight')?.value||'',
+    bfPct:  document.getElementById('bf-pct')?.value||'',
+    ffm:    document.getElementById('ffm')?.value||'',
+    steps:  document.getElementById('steps-count')?.value||'',
+    pushup: document.getElementById('pushup-count')?.value||'',
     revenue:document.getElementById('music-revenue')?.value||'',
-    credit:document.getElementById('credit-score')?.value||'',
+    credit: document.getElementById('credit-score')?.value||'',
     relocSavings:document.getElementById('reloc-savings')?.value||'',
-    notes:document.getElementById('career-notes')?.value||'',
-    iq1:document.getElementById('iq-ans-1')?.value||'',
-    iq2:document.getElementById('iq-ans-2')?.value||'',
-    todos: todos,
+    notes:  document.getElementById('career-notes')?.value||'',
+    iq1:    document.getElementById('iq-ans-1')?.value||'',
+    iq2:    document.getElementById('iq-ans-2')?.value||'',
   };
 }
 
-function applyState(s){
-  if(!s)return;
-  if(s.checks)document.querySelectorAll('.cl li').forEach(li=>{if(li.dataset.id&&s.checks[li.dataset.id])li.classList.add('done');});
-  if(s.bars)['nw3c','fema','acams','taskforce'].forEach(k=>{const f=document.getElementById('bf-'+k),p=document.getElementById('bp-'+k);if(f)f.style.width=(s.bars[k]||0)+'%';if(p)p.textContent=Math.round(s.bars[k]||0)+'%';});
-  if(s.weight){document.getElementById('current-weight').value=s.weight;setBar('bf-weight','bp-weight',clamp(((257-parseFloat(s.weight))/45)*100,0,100));}
+function applyState(s) {
+  if(!s) return;
+  if(s.checks) document.querySelectorAll('.cl li').forEach(li => { if(li.dataset.id&&s.checks[li.dataset.id]) li.classList.add('done'); });
+  if(s.bars) ['nw3c','fema','acams','taskforce','studio-upgrade','llorar','jtreff'].forEach(k=>{
+    const f=document.getElementById('bf-'+k),p=document.getElementById('bp-'+k);
+    if(f)f.style.width=(s.bars[k]||0)+'%';if(p)p.textContent=Math.round(s.bars[k]||0)+'%';
+  });
+  if(s.weight){document.getElementById('current-weight').value=s.weight;const pct=clamp(((257-parseFloat(s.weight))/45)*100,0,100);setBar('bf-weight','bp-weight',pct);setBar('home-bf-weight','home-weight-pct',pct);const wd=document.getElementById('home-weight-display');if(wd)wd.textContent=`${s.weight} lbs`;}
   if(s.bfPct){document.getElementById('bf-pct').value=s.bfPct;setBar('bf-bfpct-bar','bp-bfpct',clamp(((28-parseFloat(s.bfPct))/13)*100,0,100));}
   if(s.ffm){document.getElementById('ffm').value=s.ffm;document.getElementById('ffm')._manual=true;}
   if(s.steps){document.getElementById('steps-count').value=s.steps;const pct=clamp((parseFloat(s.steps)/8000)*100,0,100);const f=document.getElementById('bf-steps'),l=document.getElementById('bp-steps');if(f)f.style.width=pct+'%';if(l)l.textContent=parseFloat(s.steps).toLocaleString();}
   if(s.waterCount!==undefined){waterCount=s.waterCount;renderWater();updWater();}
   if(s.pushup){document.getElementById('pushup-count').value=s.pushup;setBar('bf-pushup','bp-pushup',clamp((parseFloat(s.pushup)/70)*100,0,100));const d=document.getElementById('bp-pushup');if(d)d.textContent=s.pushup;}
   if(s.prs)PR_KEYS.forEach(k=>{const el=document.getElementById('pr-'+k);if(el&&s.prs[k]){el.value=s.prs[k];const d=document.getElementById('prd-'+k);if(d)d.textContent=`${s.prs[k]} ${PR_UNITS[k]}`;}});
-  if(s.revenue){document.getElementById('music-revenue').value=s.revenue;setBar('bf-rev','bp-rev',clamp((parseFloat(s.revenue)/1000)*100,0,100));}
+  if(s.revenue){document.getElementById('music-revenue').value=s.revenue;const pct=clamp((parseFloat(s.revenue)/1000)*100,0,100);setBar('bf-rev','bp-rev',pct);setBar('home-bf-rev',null,pct);const hd=document.getElementById('home-revenue-display');if(hd)hd.textContent=s.revenue;}
   if(s.debtBals)DEBTS.forEach(({id,start})=>{if(s.debtBals[id]!==undefined&&s.debtBals[id]!==''){const el=document.getElementById('bal-'+id);if(el)el.value=s.debtBals[id];updDebt(id,start);}});
-  calcDebt();
-  if(s.credit){document.getElementById('credit-score').value=s.credit;document.getElementById('credit-score-display').textContent=s.credit;}
+  if(s.credit){document.getElementById('credit-score').value=s.credit;const d1=document.getElementById('credit-score-display'),d2=document.getElementById('credit-score-display2');if(d1)d1.textContent=s.credit;if(d2)d2.textContent=s.credit;}
   if(s.relocSavings){document.getElementById('reloc-savings').value=s.relocSavings;setBar('bf-reloc-savings','bp-reloc-savings',clamp((parseFloat(s.relocSavings)/10000)*100,0,100));}
   if(s.notes)document.getElementById('career-notes').value=s.notes;
+  if(s.incomeRows){incomeRows=s.incomeRows;renderIncomeTable();}
+  if(s.expenseRows){expenseRows=s.expenseRows;renderExpenseTable();}
+  if(s.todos){todos=s.todos;renderTodos();}
+  if(s.history){history=s.history;}
   if(s.iq1){const el=document.getElementById('iq-ans-1');if(el)el.value=s.iq1;}
   if(s.iq2){const el=document.getElementById('iq-ans-2');if(el)el.value=s.iq2;}
-  if(s.todos){todos=s.todos;renderTodos();}
-  computeAllRings();
+  calcDebt(); computeAllRings();
 }
 
 let saveTimer;
-function autoSave(){
+function autoSave() {
   clearTimeout(saveTimer);
-  const st=document.getElementById('save-status');
-  saveTimer=setTimeout(()=>{
-    try{localStorage.setItem('life-tracker-v3',JSON.stringify(collectState()));if(st){st.textContent='✓ saved';st.style.color='var(--green)';setTimeout(()=>{st.textContent='Daily Tracker';st.style.color='';},2000);}}
-    catch(e){if(st){st.textContent='✗ error';st.style.color='var(--red)';}}
-  },800);
+  const ind = document.getElementById('save-indicator');
+  if(ind){ind.className='save-indicator saving';ind.textContent='Saving...';}
+  saveTimer = setTimeout(() => { saveData(); }, 800);
 }
 
-function saveAll(){
-  try{localStorage.setItem('life-tracker-v3',JSON.stringify(collectState()));const m=document.getElementById('save-msg');if(m){m.classList.add('show');setTimeout(()=>m.classList.remove('show'),2500);}}catch(e){}
+function saveData() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(collectState()));
+    const ind = document.getElementById('save-indicator');
+    if(ind){ind.className='save-indicator saved';ind.textContent='✓ Saved';setTimeout(()=>{ind.className='save-indicator';ind.textContent='Saved';},2000);}
+  } catch(e) {
+    const ind = document.getElementById('save-indicator');
+    if(ind){ind.className='save-indicator error';ind.textContent='✗ Error';}
+  }
 }
 
-// ── To-Do List ────────────────────────────────────────────────────────────────
-let todos = [];
-
-function renderTodos() {
-  const list = document.getElementById('todo-list');
-  const addBtn = document.getElementById('add-todo-btn');
-  if (!list) return;
-  list.innerHTML = '';
-  todos.forEach((todo, i) => {
-    const row = document.createElement('div');
-    row.className = 'todo-item' + (todo.done ? ' done' : '');
-    row.innerHTML = `
-      <div class="todo-cb" onclick="toggleTodo(${i})"></div>
-      <input class="todo-input" type="text" placeholder="What needs to get done..." value="${todo.text.replace(/"/g,'&quot;')}"
-        oninput="updateTodoText(${i}, this.value)" onkeydown="if(event.key==='Enter')addTodo()"/>
-      <button class="todo-del" onclick="deleteTodo(${i})" title="Remove">✕</button>`;
-    list.appendChild(row);
-  });
-  const doneCount = todos.filter(t => t.done).length;
-  const totalCount = todos.length;
-  document.getElementById('todo-done-count').textContent = doneCount;
-  document.getElementById('todo-total-count').textContent = totalCount;
-  if (addBtn) addBtn.style.display = todos.length >= 5 ? 'none' : 'block';
-}
-
-function addTodo() {
-  if (todos.length >= 5) return;
-  todos.push({ text: '', done: false });
-  renderTodos();
-  // Focus the new input
-  const inputs = document.querySelectorAll('.todo-input');
-  if (inputs.length) inputs[inputs.length - 1].focus();
-  autoSave();
-}
-
-function toggleTodo(i) {
-  todos[i].done = !todos[i].done;
-  renderTodos();
-  autoSave();
-}
-
-function updateTodoText(i, val) {
-  todos[i].text = val;
-  autoSave();
-}
-
-function deleteTodo(i) {
-  todos.splice(i, 1);
-  renderTodos();
-  autoSave();
-}
-
-function clearDoneTodos() {
-  todos = todos.filter(t => !t.done);
-  renderTodos();
-  autoSave();
-}
-
-renderTodos();
-
-// ── Boot ──────────────────────────────────────────────────────────────────────
+// ─── Boot ─────────────────────────────────────────────────────────────────────
 renderIQ();
-try{const s=localStorage.getItem('life-tracker-v3');if(s)applyState(JSON.parse(s));}catch(e){}
-setTimeout(computeAllRings,300);
+renderIncomeTable();
+renderExpenseTable();
+
+try { const s = localStorage.getItem(STORAGE_KEY); if(s) applyState(JSON.parse(s)); } catch(e) {}
+setTimeout(computeAllRings, 300);
 </script>
 </body>
 </html>
