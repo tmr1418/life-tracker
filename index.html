@@ -140,8 +140,10 @@ select option{background:var(--card)}
 .quest-status.active{color:var(--gold)}.quest-status.complete{color:var(--green)}.quest-status.locked{color:var(--muted)}
 
 /* FOOD TRACKER */
-.food-entry{display:grid;grid-template-columns:1fr 80px 70px;gap:8px;margin-bottom:8px;align-items:center}
+.food-entry{display:grid;grid-template-columns:1fr 70px 90px 36px;gap:6px;margin-bottom:8px;align-items:center}
 .food-entry input{font-size:0.8rem;padding:6px 8px}
+.food-entry select{font-size:0.75rem;padding:6px 6px;background:var(--subtle);border:1px solid var(--border);border-radius:6px;color:var(--text);outline:none}
+.food-entry select:focus{border-color:var(--gold)}
 .food-del-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.85rem;padding:4px 6px;transition:color 0.15s;text-align:center}
 .food-del-btn:hover{color:var(--red)}
 .macro-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
@@ -257,7 +259,7 @@ hr{border:none;border-top:1px solid var(--border);margin:22px 0}
         <div class="xp-label"><span class="xp-name">Overall XP</span><span class="xp-val" id="overall-xp-val">0 / 100</span></div>
         <div class="xp-track"><div class="xp-fill" id="overall-xp-fill" style="width:0%"></div></div>
       </div>
-      <div style="font-family:'DM Mono',monospace;font-size:0.58rem;color:var(--muted);margin-top:5px;letter-spacing:0.08em">Phase 2 unlocks at 100 XP (215 lbs + debt below $4,261)</div>
+      <div style="font-family:'DM Mono',monospace;font-size:0.58rem;color:var(--muted);margin-top:5px;letter-spacing:0.08em">Phase 2 unlocks at 100 XP (215 lbs + debt below $4,938)</div>
     </div>
   </div>
 
@@ -278,9 +280,9 @@ hr{border:none;border-top:1px solid var(--border);margin:22px 0}
         <div class="quest-icon">💳</div>
         <div class="quest-body">
           <div class="quest-title">Debt Goal</div>
-          <div class="quest-desc">Below $4,261 remaining</div>
+          <div class="quest-desc">Below $4,938 remaining</div>
           <div class="xp-wrap"><div class="xp-track"><div class="xp-fill red" id="q-xp-debt" style="width:0%"></div></div></div>
-          <div class="quest-status active" id="q-status-debt">$<span id="q-debt-val">42,608</span> remaining</div>
+          <div class="quest-status active" id="q-status-debt">$<span id="q-debt-val">49,379</span> remaining</div>
         </div>
       </div>
       <div class="quest-card" id="qcard-music">
@@ -404,10 +406,11 @@ hr{border:none;border-top:1px solid var(--border);margin:22px 0}
     <div class="sl"><span>Food Log — Macro Estimator</span></div>
     <div class="card">
       <div class="card-title"><div class="dot orange"></div> What Did You Eat Today?</div>
-      <p style="font-size:0.78rem;color:var(--muted);margin-bottom:14px;line-height:1.5">Enter food and amount. Claude will estimate macros based on common nutritional data.</p>
-      <div style="display:grid;grid-template-columns:1fr 90px 50px;gap:8px;margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid var(--border)">
-        <span style="font-family:'DM Mono',monospace;font-size:0.58rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)">Food</span>
-        <span style="font-family:'DM Mono',monospace;font-size:0.58rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)">Amount</span>
+      <p style="font-size:0.78rem;color:var(--muted);margin-bottom:14px;line-height:1.5">Enter food, amount, and unit. Macros are estimated from common nutritional data.</p>
+      <div style="display:grid;grid-template-columns:1fr 70px 90px 36px;gap:6px;margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid var(--border)">
+        <span style="font-family:'DM Mono',monospace;font-size:0.56rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)">Food</span>
+        <span style="font-family:'DM Mono',monospace;font-size:0.56rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)">Amount</span>
+        <span style="font-family:'DM Mono',monospace;font-size:0.56rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)">Unit</span>
         <span></span>
       </div>
       <div id="food-entries"></div>
@@ -435,9 +438,9 @@ hr{border:none;border-top:1px solid var(--border);margin:22px 0}
 
   <div class="card" style="border-color:rgba(34,197,94,0.25)">
     <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px">
-      <div><div class="sl2">Remaining</div><div class="sv red" style="font-size:1.8rem">$<span id="total-debt-display">42,608</span></div></div>
+      <div><div class="sl2">Remaining</div><div class="sv red" style="font-size:1.8rem">$<span id="total-debt-display">49,379</span></div></div>
       <div><div class="sl2">Paid Off</div><div class="sv green" style="font-size:1.8rem">$<span id="total-paid-display">0</span></div></div>
-      <div><div class="sl2">Unlock Target</div><div class="sv purple" style="font-size:1.8rem">$4,261</div><div class="ss">Below 10% = Phase 2</div></div>
+      <div><div class="sl2">Unlock Target</div><div class="sv purple" style="font-size:1.8rem">$4,938</div><div class="ss">Below 10% = Phase 2</div></div>
       <div><div class="sl2">Credit Score</div><div class="sv gold" style="font-size:1.8rem" id="credit-score-display">650</div></div>
     </div>
     <div class="bw" style="margin-bottom:0">
@@ -450,9 +453,9 @@ hr{border:none;border-top:1px solid var(--border);margin:22px 0}
   <div class="g3">
     <div class="card"><div class="card-title"><div class="dot red"></div> Capital One</div><div class="sb"><div class="sl2">Starting</div><div class="sv">$6,423</div><div class="ss">Min: $181 · Due: 28th</div></div><label class="fl">Balance ($)</label><input type="number" id="bal-cap1" placeholder="6423" min="0" max="9999"/><div class="bw" style="margin-top:8px;margin-bottom:0"><div class="bm"><span class="bl">Paid Off</span><span class="bp" id="bp-cap1">0%</span></div><div class="bt"><div class="bf green" id="bf-cap1" style="width:0%"></div></div></div></div>
     <div class="card"><div class="card-title"><div class="dot green"></div> Express</div><div class="sb"><div class="sl2">Balance</div><div class="sv green">$0</div><div class="ss">Min: $37 · Due: 28th</div></div><div class="sb" style="background:rgba(34,197,94,0.06);border-color:rgba(34,197,94,0.2)"><div class="sl2" style="color:var(--green)">✓ Clear</div><div class="sv green">PAID OFF</div></div></div>
-    <div class="card"><div class="card-title"><div class="dot red"></div> Best Buy</div><div class="sb"><div class="sl2">Starting</div><div class="sv">$1,999</div><div class="ss">Min: $291 · Due: 18th</div></div><label class="fl">Balance ($)</label><input type="number" id="bal-bestbuy" placeholder="1999" min="0" max="9999"/><div class="bw" style="margin-top:8px;margin-bottom:0"><div class="bm"><span class="bl">Paid Off</span><span class="bp" id="bp-bestbuy">0%</span></div><div class="bt"><div class="bf green" id="bf-bestbuy" style="width:0%"></div></div></div></div>
+    <div class="card"><div class="card-title"><div class="dot red"></div> Best Buy</div><div class="sb"><div class="sl2">Starting</div><div class="sv">$4,300</div><div class="ss">Min: $291 · Due: 18th</div></div><label class="fl">Balance ($)</label><input type="number" id="bal-bestbuy" placeholder="4300" min="0" max="9999"/><div class="bw" style="margin-top:8px;margin-bottom:0"><div class="bm"><span class="bl">Paid Off</span><span class="bp" id="bp-bestbuy">0%</span></div><div class="bt"><div class="bf green" id="bf-bestbuy" style="width:0%"></div></div></div></div>
     <div class="card"><div class="card-title"><div class="dot green"></div> Macy's</div><div class="sb"><div class="sl2">Balance</div><div class="sv green">$0</div><div class="ss">Min: $50 · Due: 13th</div></div><div class="sb" style="background:rgba(34,197,94,0.06);border-color:rgba(34,197,94,0.2)"><div class="sl2" style="color:var(--green)">✓ Clear</div><div class="sv green">PAID OFF</div></div></div>
-    <div class="card"><div class="card-title"><div class="dot red"></div> Chase Personal</div><div class="sb"><div class="sl2">Starting</div><div class="sv">$18,600</div><div class="ss">Min: $535 · Due: 2nd</div></div><label class="fl">Balance ($)</label><input type="number" id="bal-chase" placeholder="18600" min="0" max="99999"/><div class="bw" style="margin-top:8px;margin-bottom:0"><div class="bm"><span class="bl">Paid Off</span><span class="bp" id="bp-chase">0%</span></div><div class="bt"><div class="bf green" id="bf-chase" style="width:0%"></div></div></div></div>
+    <div class="card"><div class="card-title"><div class="dot red"></div> Chase Personal</div><div class="sb"><div class="sl2">Starting</div><div class="sv">$23,470</div><div class="ss">Min: $535 · Due: 2nd</div></div><label class="fl">Balance ($)</label><input type="number" id="bal-chase" placeholder="23470" min="0" max="99999"/><div class="bw" style="margin-top:8px;margin-bottom:0"><div class="bm"><span class="bl">Paid Off</span><span class="bp" id="bp-chase">0%</span></div><div class="bt"><div class="bf green" id="bf-chase" style="width:0%"></div></div></div></div>
     <div class="card"><div class="card-title"><div class="dot red"></div> Citi</div><div class="sb"><div class="sl2">Starting</div><div class="sv">$4,586</div><div class="ss">Min: $45 · Due: 27th</div></div><label class="fl">Balance ($)</label><input type="number" id="bal-citi" placeholder="4586" min="0" max="9999"/><div class="bw" style="margin-top:8px;margin-bottom:0"><div class="bm"><span class="bl">Paid Off</span><span class="bp" id="bp-citi">0%</span></div><div class="bt"><div class="bf green" id="bf-citi" style="width:0%"></div></div></div></div>
   </div>
 
@@ -646,7 +649,7 @@ hr{border:none;border-top:1px solid var(--border);margin:22px 0}
         </div>
         <div class="lock-req" id="lock-req-debt">
           <div class="lock-req-label">💳 Debt Goal</div>
-          <div class="lock-req-val">Below $4,261</div>
+          <div class="lock-req-val">Below $4,938</div>
           <div class="xp-wrap"><div class="xp-track"><div class="xp-fill red" id="lock-xp-debt" style="width:0%"></div></div></div>
           <div style="font-family:'DM Mono',monospace;font-size:0.58rem;color:var(--muted);margin-top:4px" id="lock-debt-status">—</div>
         </div>
@@ -718,9 +721,9 @@ hr{border:none;border-top:1px solid var(--border);margin:22px 0}
 </div>
 <script>
 // ── Constants ─────────────────────────────────────────────────────────────────
-const WEIGHT_GOAL=215, DEBT_UNLOCK=4261, TOTAL_DEBT_START=42608;
+const WEIGHT_GOAL=215, DEBT_UNLOCK=4938, TOTAL_DEBT_START=49379;
 const STORAGE_KEY='life-tracker-v6';
-const DEBTS=[{id:'cap1',start:6423},{id:'bestbuy',start:1999},{id:'chase',start:18600},{id:'citi',start:4586},{id:'biz',start:11000}];
+const DEBTS=[{id:'cap1',start:6423},{id:'bestbuy',start:4300},{id:'chase',start:23470},{id:'citi',start:4586},{id:'biz',start:11000}];
 const PR_KEYS=['chest','shoulder','squat','deadlift','stair-speed','stair-time'];
 const PR_UNITS={chest:'lbs',shoulder:'lbs',squat:'lbs',deadlift:'lbs','stair-speed':'lvl','stair-time':'min'};
 const LEVELS=[
@@ -956,10 +959,17 @@ function updateBudgetSummary(){
 }
 
 // ── Food Tracker / Macro Estimator ────────────────────────────────────────────
-function estimateMacros(foodName, amountStr){
+function estimateMacros(foodName, amount, unit){
   const name = foodName.toLowerCase().trim();
-  const amount = parseFloat(amountStr) || 0;
-  if(!name || amount === 0) return {cal:0,p:0,c:0,f:0};
+  if(!name || !amount || amount === 0) return {cal:0,p:0,c:0,f:0};
+
+  // Convert everything to grams or a standard unit for calculation
+  let grams = amount;
+  if(unit === 'oz')  grams = amount * 28.35;
+  if(unit === 'cup') grams = amount * 240; // approx for liquids/loose
+  if(unit === 'tbsp') grams = amount * 15;
+  if(unit === 'lb')  grams = amount * 453.6;
+  // 'g', 'ml', 'each', 'slice', 'scoop', 'serving' use amount directly
 
   // Find best match in DB
   let match = null;
@@ -971,14 +981,18 @@ function estimateMacros(foodName, amountStr){
   });
 
   if(!match) {
-    // Generic fallback: assume ~150 cal, 15g protein per 100g/serving
-    const multiplier = amount / 100;
-    return {cal:Math.round(150*multiplier), p:Math.round(15*multiplier), c:Math.round(10*multiplier), f:Math.round(5*multiplier)};
+    // Generic fallback based on unit type
+    let mult = grams / 100;
+    if(unit === 'each' || unit === 'slice' || unit === 'scoop' || unit === 'serving') mult = amount;
+    return {cal:Math.round(150*mult), p:Math.round(12*mult), c:Math.round(15*mult), f:Math.round(5*mult)};
   }
 
   let multiplier;
-  if(match.unit === 'g' || match.unit === 'ml') multiplier = amount / 100;
-  else multiplier = amount; // per unit (each, slice, scoop, etc.)
+  if(match.unit === 'each' || match.unit === 'slice' || match.unit === 'scoop' || match.unit === 'serving') {
+    multiplier = amount;
+  } else {
+    multiplier = grams / 100;
+  }
 
   return {
     cal: Math.round(match.cal * multiplier),
@@ -992,26 +1006,28 @@ function renderFoodEntries(){
   const container = document.getElementById('food-entries');
   if(!container) return;
   container.innerHTML = '';
+  const units = ['g','oz','lb','ml','cup','tbsp','each','slice','scoop','serving'];
   foodEntries.forEach((entry, i) => {
     const row = document.createElement('div');
     row.className = 'food-entry';
+    const unitOpts = units.map(u => `<option value="${u}" ${(entry.unit||'g')===u?'selected':''}>${u}</option>`).join('');
     row.innerHTML = `
-      <input type="text" placeholder="e.g. chicken breast, rice, eggs" value="${entry.food}" oninput="foodEntries[${i}].food=this.value;updateMacros();autoSave()"/>
-      <input type="text" placeholder="e.g. 150g, 2 each" value="${entry.amount}" oninput="foodEntries[${i}].amount=this.value;updateMacros();autoSave()"/>
+      <input type="text" placeholder="e.g. chicken breast, rice, eggs" value="${entry.food.replace(/"/g,'&quot;')}" oninput="foodEntries[${i}].food=this.value;updateMacros();autoSave()"/>
+      <input type="number" placeholder="0" value="${entry.amount||''}" min="0" step="any" oninput="foodEntries[${i}].amount=this.value;updateMacros();autoSave()"/>
+      <select onchange="foodEntries[${i}].unit=this.value;updateMacros();autoSave()">${unitOpts}</select>
       <button class="food-del-btn" onclick="delFoodEntry(${i})">✕</button>`;
     container.appendChild(row);
   });
   updateMacros();
 }
 
-function addFoodEntry(){foodEntries.push({food:'',amount:''});renderFoodEntries();const inputs=document.querySelectorAll('.food-entry input');if(inputs.length)inputs[inputs.length-2].focus();autoSave();}
+function addFoodEntry(){foodEntries.push({food:'',amount:'',unit:'g'});renderFoodEntries();const inputs=document.querySelectorAll('.food-entry input[type=text]');if(inputs.length)inputs[inputs.length-1].focus();autoSave();}
 function delFoodEntry(i){foodEntries.splice(i,1);renderFoodEntries();autoSave();}
 
 function updateMacros(){
   let totalCal=0,totalP=0,totalC=0,totalF=0;
   foodEntries.forEach(entry=>{
-    const amountNum = parseFloat(entry.amount) || 0;
-    const m = estimateMacros(entry.food, amountNum);
+    const m = estimateMacros(entry.food, parseFloat(entry.amount)||0, entry.unit||'g');
     totalCal+=m.cal;totalP+=m.p;totalC+=m.c;totalF+=m.f;
   });
   const mc=document.getElementById('m-cal'),mp=document.getElementById('m-protein'),mcarb=document.getElementById('m-carbs'),mf=document.getElementById('m-fat');
@@ -1047,7 +1063,7 @@ function logToday(){
   const key=dateKey(now.getFullYear(),now.getMonth(),now.getDate());
   let rem=0;DEBTS.forEach(({id,start})=>{const v=parseFloat(document.getElementById('bal-'+id)?.value);rem+=isNaN(v)?start:Math.max(0,v);});
   let totalCal=0,totalP=0;
-  foodEntries.forEach(e=>{const m=estimateMacros(e.food,parseFloat(e.amount)||0);totalCal+=m.cal;totalP+=m.p;});
+  foodEntries.forEach(e=>{const m=estimateMacros(e.food,parseFloat(e.amount)||0,e.unit||'g');totalCal+=m.cal;totalP+=m.p;});
 
   historyEntries[key]={
     date:now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}),
